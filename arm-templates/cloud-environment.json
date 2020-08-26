@@ -1,0 +1,1190 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "baseName": {
+      "type": "string",
+      "maxLength": 10,
+      "minLength": 3,
+      "metadata": {
+        "description": "The base name to use as prefix to create all the resources."
+      }
+    },
+    "location": {
+      "type": "string",
+      "defaultValue": "eastus",
+      "allowedValues": [
+        "eastus",
+        "eastus2",
+        "southcentralus",
+        "southeastasia",
+        "westcentralus",
+        "westeurope",
+        "westus2",
+        "centralus",
+        "japaneast"
+      ],
+      "metadata": {
+        "description": "Specifies the location for all resources."
+      }
+    },
+    "collation": {
+      "type": "string",
+      "defaultValue": "Japanese_XJIS_100_CI_AS",
+      "metadata": {
+        "description": "日本語環境での推奨値です"
+      }
+    },
+    "sqlAdministratorLogin": {
+      "type": "string",
+      "defaultValue": "sqladmin"
+    },
+    "sqlAdministratorLoginPassword": {
+      "type": "securestring",
+      "defaultValue": "P@ssw0rd"
+    },
+    "isDataFactoryUseGit": {
+      "type": "string",
+      "defaultValue": "0"
+    },
+    "devOpsAccountName": {
+      "type": "string"
+    },
+    "devOpsProjectName": {
+      "type": "string"
+    },
+    "devOpsRepositoryName": {
+      "type": "string"
+    },
+    "devOpsTenantId": {
+      "type": "string"
+    },
+    "VMAdministratorLogin": {
+      "type": "string",
+      "defaultValue": "iradmin"
+    },
+    "VMAdministratorLoginPassword": {
+      "type": "securestring",
+      "defaultValue": "Passw0rd1234"
+    },
+    "grantPublicIp": {
+      "type": "string"
+    },
+    "gwSKU": {
+      "type": "string",
+      "defaultValue": "Standard_A4_v2"
+    },
+    "armStgAccountSasProperties": {
+      "type": "object",
+      "defaultValue": {
+        "signedServices": "b",
+        "signedPermission": "acdlpruw",
+        "signedExpiry": "2024-03-01T00:00:01Z",
+        "signedResourceTypes": "co"
+      }
+    },
+    "AzureDatabricksId": {
+      "type": "string"
+    },
+    "DevOpsAppId": {
+      "type": "string"
+    }
+  },
+  "variables": {
+    "gitconfjsonvalue": {
+      "repoConfiguration": {
+        "accountName": "[parameters('devOpsAccountName')]",
+        "collaborationBranch": "master",
+        "lastCommitId": "",
+        "projectName": "[parameters('devOpsProjectName')]",
+        "repositoryName": "[parameters('devOpsRepositoryName')]",
+        "rootFolder": "/02_ADF",
+        "tenantId": "[parameters('devOpsTenantId')]",
+        "type": "FactoryVSTSConfiguration"
+      }
+    },
+    "vnetName": "[concat(toLower(parameters('baseName')),'-vnet')]",
+    "gatewayNsgName": "[concat(parameters('baseName'),'-gateway-nsg')]",
+    "gatewayNsgId": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('gatewayNsgName'))]",
+    "gatewaySubnetName": "gateway",
+    "gatewaySubnetId": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vnetName'), variables('gatewaySubnetName'))]",
+
+    "adfName": "[concat(toLower(parameters('baseName')),'-adf')]",
+    "SelfhostedIRName": "[concat(parameters('baseName'),'-ir')]",
+
+    "sqlServerName": "[concat(toLower(parameters('baseName')),'-sql')]",
+    "sqlDatabaseName": "[concat(toLower(parameters('baseName')),'-db')]",
+    "sqlAuditStorageName": "[concat(replace(toLower(parameters('baseName')),'-',''),'sqlaudit')]",
+    "uniqueRoleGuid": "[guid(resourceId('Microsoft.Storage/storageAccounts',  variables('sqlAuditStorageName')), variables('storageBlobContributor'), resourceId('Microsoft.Sql/servers', variables('sqlServerName')))]",
+    "sqlConnectionString": "[concat('Integrated Security=False;Encrypt=True;Connection Timeout=30;Data Source=',variables('sqlServerName'),'.database.windows.net;Initial Catalog=',variables('sqlDatabaseName'))]",
+    "sqlServerURL": "[concat(variables('sqlServerName'),'.database.windows.net')]",
+
+    "adlsName": "[concat(replace(toLower(parameters('baseName')),'-',''),'adls')]",
+    "adlsurl": "[concat('https://',variables('adlsName'),'.dfs.core.windows.net')]",
+    "storageBlobDataContributorRoleID": "ba92f5b4-2d11-453d-a403-e96b0029c9fe",
+    "StorageBlobContributor": "[subscriptionResourceId('Microsoft.Authorization/roleDefinitions',variables('storageBlobDataContributorRoleID'))]",
+
+    "adbWorkspaceName": "[concat(toLower(parameters('baseName')),'-adb')]",
+    "adbNsgName": "[concat(parameters('baseName'),'-adb-nsg')]",
+    "adbnsgId": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('adbNsgName'))]",
+    "managedResourceGroupName": "[concat('databricks-rg-', variables('adbWorkspaceName'), '-', uniqueString(variables('adbWorkspaceName'), resourceGroup().id))]",
+    "managedResourceGroupId": "[concat(subscription().id, '/resourceGroups/', variables('managedResourceGroupName'))]",
+
+    "akvName": "[concat(parameters('baseName'),'-akv')]",
+    "akvurl": "[concat('https://',variables('akvName'),'.vault.azure.net/')]",
+
+    "pbigwDiagnStorageName": "[concat(substring(replace(toLower(parameters('baseName')),'-',''),0,6),'pbgwaudit')]",
+    "pbigwPublicIPAddressName": "[concat(substring(toLower(parameters('baseName')),0,6),'-pbgw-ip')]",
+    "pbigwDnsLabal": "[concat(substring(toLower(parameters('baseName')),0,6),'-pbgw')]",
+    "pbigwNicName": "[concat(substring(toLower(parameters('baseName')),0,6),'-pbgw-nic')]",
+    "pbigwVMName": "[concat(substring(toLower(parameters('baseName')),0,6),'-pbgw-vm')]",
+    "armStgStorageName": "[concat(replace(toLower(parameters('baseName')),'-',''),'armsa')]"
+  },
+  "resources": [
+    {
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "apiVersion": "2020-04-01",
+      "name": "[variables('gatewayNsgName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "securityRules": [
+          {
+            "name": "default-allow-rdp",
+            "properties": {
+              "priority": 1000,
+              "protocol": "Tcp",
+              "destinationPortRange": "3389",
+              "access": "Allow",
+              "direction": "Inbound",
+              "sourcePortRange": "*",
+              "destinationAddressPrefix": "*",
+              "sourceAddressPrefix": "[parameters('grantPublicIp')]"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "apiVersion": "2019-06-01",
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "location": "[parameters('location')]",
+      "name": "[variables('adbNsgName')]",
+      "properties": {
+        "securityRules": [
+          {
+            "name": "Microsoft.Databricks-workspaces_UseOnly_databricks-worker-to-worker-inbound",
+            "properties": {
+              "description": "Required for worker nodes communication within a cluster.",
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "*",
+              "sourceAddressPrefix": "VirtualNetwork",
+              "destinationAddressPrefix": "VirtualNetwork",
+              "access": "Allow",
+              "priority": 100,
+              "direction": "Inbound",
+              "sourcePortRanges": [],
+              "destinationPortRanges": [],
+              "sourceAddressPrefixes": [],
+              "destinationAddressPrefixes": []
+            }
+          },
+          {
+            "name": "Microsoft.Databricks-workspaces_UseOnly_databricks-control-plane-to-worker-ssh",
+            "properties": {
+              "description": "Required for Databricks control plane management of worker nodes.",
+              "protocol": "tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "22",
+              "sourceAddressPrefix": "AzureDatabricks",
+              "destinationAddressPrefix": "VirtualNetwork",
+              "access": "Allow",
+              "priority": 101,
+              "direction": "Inbound",
+              "sourcePortRanges": [],
+              "destinationPortRanges": [],
+              "sourceAddressPrefixes": [],
+              "destinationAddressPrefixes": []
+            }
+          },
+          {
+            "name": "Microsoft.Databricks-workspaces_UseOnly_databricks-control-plane-to-worker-proxy",
+            "properties": {
+              "description": "Required for Databricks control plane communication with worker nodes.",
+              "protocol": "tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "5557",
+              "sourceAddressPrefix": "AzureDatabricks",
+              "destinationAddressPrefix": "VirtualNetwork",
+              "access": "Allow",
+              "priority": 102,
+              "direction": "Inbound",
+              "sourcePortRanges": [],
+              "destinationPortRanges": [],
+              "sourceAddressPrefixes": [],
+              "destinationAddressPrefixes": []
+            }
+          },
+          {
+            "name": "Microsoft.Databricks-workspaces_UseOnly_databricks-worker-to-databricks-webapp",
+            "properties": {
+              "description": "Required for workers communication with Databricks Webapp.",
+              "protocol": "tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "443",
+              "sourceAddressPrefix": "VirtualNetwork",
+              "destinationAddressPrefix": "AzureDatabricks",
+              "access": "Allow",
+              "priority": 100,
+              "direction": "Outbound",
+              "sourcePortRanges": [],
+              "destinationPortRanges": [],
+              "sourceAddressPrefixes": [],
+              "destinationAddressPrefixes": []
+            }
+          },
+          {
+            "name": "Microsoft.Databricks-workspaces_UseOnly_databricks-worker-to-sql",
+            "properties": {
+              "description": "Required for workers communication with Azure SQL services.",
+              "protocol": "tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "3306",
+              "sourceAddressPrefix": "VirtualNetwork",
+              "destinationAddressPrefix": "Sql",
+              "access": "Allow",
+              "priority": 101,
+              "direction": "Outbound",
+              "sourcePortRanges": [],
+              "destinationPortRanges": [],
+              "sourceAddressPrefixes": [],
+              "destinationAddressPrefixes": []
+            }
+          },
+          {
+            "name": "Microsoft.Databricks-workspaces_UseOnly_databricks-worker-to-storage",
+            "properties": {
+              "description": "Required for workers communication with Azure Storage services.",
+              "protocol": "tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "443",
+              "sourceAddressPrefix": "VirtualNetwork",
+              "destinationAddressPrefix": "Storage",
+              "access": "Allow",
+              "priority": 102,
+              "direction": "Outbound",
+              "sourcePortRanges": [],
+              "destinationPortRanges": [],
+              "sourceAddressPrefixes": [],
+              "destinationAddressPrefixes": []
+            }
+          },
+          {
+            "name": "Microsoft.Databricks-workspaces_UseOnly_databricks-worker-to-worker-outbound",
+            "properties": {
+              "description": "Required for worker nodes communication within a cluster.",
+              "protocol": "*",
+              "sourcePortRange": "*",
+              "destinationPortRange": "*",
+              "sourceAddressPrefix": "VirtualNetwork",
+              "destinationAddressPrefix": "VirtualNetwork",
+              "access": "Allow",
+              "priority": 103,
+              "direction": "Outbound",
+              "sourcePortRanges": [],
+              "destinationPortRanges": [],
+              "sourceAddressPrefixes": [],
+              "destinationAddressPrefixes": []
+            }
+          },
+          {
+            "name": "Microsoft.Databricks-workspaces_UseOnly_databricks-worker-to-eventhub",
+            "properties": {
+              "description": "Required for worker communication with Azure Eventhub services.",
+              "protocol": "tcp",
+              "sourcePortRange": "*",
+              "destinationPortRange": "9093",
+              "sourceAddressPrefix": "VirtualNetwork",
+              "destinationAddressPrefix": "EventHub",
+              "access": "Allow",
+              "priority": 104,
+              "direction": "Outbound",
+              "sourcePortRanges": [],
+              "destinationPortRanges": [],
+              "sourceAddressPrefixes": [],
+              "destinationAddressPrefixes": []
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Network/virtualNetworks",
+      "apiVersion": "2020-04-01",
+      "name": "[variables('vnetName')]",
+      "location": "[parameters('location')]",
+      "dependsOn": [ "[variables('adbnsgId')]", "[variables('gatewayNsgId')]"],
+      "properties": {
+        "addressSpace": {
+          "addressPrefixes": [
+            "10.20.0.0/14"
+          ]
+        },
+        "subnets": [
+          {
+            "name": "[variables('gatewaySubnetName')]",
+            "properties": {
+              "addressPrefix": "10.20.0.0/24",
+              "serviceEndpoints": [
+                {
+                  "service": "Microsoft.Sql",
+                  "locations": [
+                    "[parameters('location')]"
+                  ]
+                },
+                {
+                  "service": "Microsoft.Storage",
+                  "locations": [
+                    "[parameters('location')]"
+                  ]
+                }
+              ],
+              "delegations": [],
+              "privateEndpointNetworkPolicies": "Enabled",
+              "privateLinkServiceNetworkPolicies": "Enabled",
+              "networkSecurityGroup": {
+                "id": "[variables('gatewayNsgId')]"
+              }
+            }
+          },
+          {
+            "name": "adb-public-subnet",
+            "properties": {
+              "addressPrefix": "10.21.4.0/22",
+              "serviceEndpoints": [
+                {
+                  "service": "Microsoft.Storage",
+                  "locations": [
+                    "[parameters('location')]"
+                  ]
+                },
+                {
+                  "service": "Microsoft.Sql",
+                  "locations": [
+                    "[parameters('location')]"
+                  ]
+                }
+              ],
+              "delegations": [
+                {
+                  "name": "databricks-del-public",
+                  "properties": {
+                    "serviceName": "Microsoft.Databricks/workspaces"
+                  }
+                }
+              ],
+              "privateEndpointNetworkPolicies": "Enabled",
+              "privateLinkServiceNetworkPolicies": "Enabled",
+              "networkSecurityGroup": {
+                "id": "[variables('adbnsgId')]"
+              }
+            }
+          },
+          {
+            "name": "adb-private-subnet",
+            "properties": {
+              "addressPrefix": "10.21.8.0/22",
+              "serviceEndpoints": [
+                {
+                  "service": "Microsoft.Storage",
+                  "locations": [
+                    "[parameters('location')]"
+                  ]
+                },
+                {
+                  "service": "Microsoft.Sql",
+                  "locations": [
+                    "[parameters('location')]"
+                  ]
+                }
+              ],
+              "delegations": [
+                {
+                  "name": "databricks-del-private",
+                  "properties": {
+                    "serviceName": "Microsoft.Databricks/workspaces"
+                  }
+                }
+              ],
+              "privateEndpointNetworkPolicies": "Enabled",
+              "privateLinkServiceNetworkPolicies": "Enabled",
+              "networkSecurityGroup": {
+                "id": "[variables('adbnsgId')]"
+              }
+
+            }
+          }
+        ],
+        "virtualNetworkPeerings": [],
+        "enableDdosProtection": false,
+        "enableVmProtection": false
+      }
+    },
+    {
+      "type": "Microsoft.Sql/servers",
+      "apiVersion": "2019-06-01-preview",
+      "name": "[variables('sqlServerName')]",
+      "location": "[parameters('location')]",
+      "identity": "[json('{\"type\":\"SystemAssigned\"}')]",
+      "kind": "v12.0",
+      "properties": {
+        "administratorLogin": "[parameters('sqlAdministratorLogin')]",
+        "administratorLoginPassword": "[parameters('sqlAdministratorLoginPassword')]",
+        "version": "12.0",
+        "publicNetworkAccess": "Enabled"
+
+      }
+    },
+    {
+
+      "type": "Microsoft.Sql/servers/securityAlertPolicies",
+      "apiVersion": "2017-03-01-preview",
+      "name": "[concat(variables('sqlServerName'), '/Default')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Sql/servers', variables('sqlServerName'))]"
+      ],
+      "properties": {
+        "state": "Enabled",
+        "emailAccountAdmins": false
+      }
+    },
+    {
+
+      "type": "Microsoft.Sql/servers/vulnerabilityAssessments",
+      "name": "[concat(variables('sqlServerName'), '/Default')]",
+      "dependsOn": [
+        "[variables('sqlServerName')]",
+        "[resourceId('Microsoft.Sql/servers/securityAlertPolicies', variables('sqlServerName'), 'Default')]"
+      ],
+      "apiVersion": "2018-06-01-preview",
+      "properties": {
+        "storageContainerPath": "[concat('https://',variables('sqlAuditStorageName'),'.blob.core.windows.net/vulnerability-assessment/')]",
+        "recurringScans": {
+          "isEnabled": true,
+          "emailSubscriptionAdmins": false
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Sql/servers/databases",
+      "apiVersion": "2019-06-01-preview",
+      "name": "[concat(variables('sqlServerName'),'/',variables('sqlDatabaseName'))]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Sql/servers', variables('sqlServerName'))]"
+      ],
+      "sku": {
+                "name": "DataWarehouse",
+                "tier": "DataWarehouse",
+                "capacity": 900
+            },
+            "kind": "v12.0,user,datawarehouse,gen2",
+            "properties": {
+                "collation": "[parameters('collation')]",
+                "maxSizeBytes": 263882790666240,
+                "catalogCollation": "SQL_Latin1_General_CP1_CI_AS",
+                "readScale": "Disabled",
+                "readReplicaCount": 0,
+                "storageAccountType": "GRS"
+            },
+      "resources": [
+
+        {
+          "type": "auditingSettings",
+          "apiVersion": "2017-03-01-preview",
+          "name": "DefaultAuditingSettings",
+          "dependsOn": [
+            "[variables('sqlServerName')]",
+            "[variables('sqlAuditStorageName')]",
+            "[variables('sqlDatabaseName')]"
+          ],
+          "properties": {
+            "state": "Enabled",
+            "storageEndpoint": "[concat('https://',variables('sqlAuditStorageName'),'.blob.core.windows.net')]"
+          }
+        }
+      ]
+    },
+    {
+      "type": "Microsoft.Sql/servers/virtualNetworkRules",
+      "apiVersion": "2015-05-01-preview",
+      "name": "[concat(variables('sqlServerName'), '/',variables('gatewaySubnetName'))]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Sql/servers', variables('sqlServerName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('vnetName'))]"
+      ],
+      "properties": {
+        "virtualNetworkSubnetId": "[concat(resourceId('Microsoft.Network/virtualNetworks/subnets',variables('vnetName'), variables('gatewaySubnetName')))]",
+        "ignoreMissingVnetServiceEndpoint": false
+      }
+    },
+    {
+      "type": "Microsoft.Sql/servers/virtualNetworkRules",
+      "apiVersion": "2015-05-01-preview",
+      "name": "[concat(variables('sqlServerName'), '/','mlcomputes')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Sql/servers', variables('sqlServerName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('vnetName'))]"
+      ],
+      "properties": {
+        "virtualNetworkSubnetId": "[concat(resourceId('Microsoft.Network/virtualNetworks/subnets',variables('vnetName'), 'mlcomputes'))]",
+        "ignoreMissingVnetServiceEndpoint": false
+      }
+    },
+    {
+      "type": "Microsoft.Sql/servers/virtualNetworkRules",
+      "apiVersion": "2015-05-01-preview",
+      "name": "[concat(variables('sqlServerName'), '/','adbpublic')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Sql/servers', variables('sqlServerName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('vnetName'))]"
+      ],
+      "properties": {
+        "virtualNetworkSubnetId": "[concat(resourceId('Microsoft.Network/virtualNetworks/subnets',variables('vnetName'), 'adb-public-subnet'))]",
+        "ignoreMissingVnetServiceEndpoint": false
+      }
+    },
+    {
+      "type": "Microsoft.Sql/servers/firewallRules",
+      "apiVersion": "2015-05-01-preview",
+      "name": "[concat(variables('sqlServerName'), '/zeal')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Sql/servers', variables('sqlServerName'))]"
+      ],
+      "properties": {
+        "startIpAddress": "[parameters('grantPublicIp')]",
+        "endIpAddress": "[parameters('grantPublicIp')]"
+      }
+    },
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "apiVersion": "2019-06-01",
+      "name": "[variables('adlsName')]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('vnetName'))]"
+      ],
+      "tags": {},
+      "sku": {
+        "name": "Standard_RAGRS"
+      },
+      "kind": "StorageV2",
+      "properties": {
+        "networkAcls": {
+          "bypass": "AzureServices",
+          "virtualNetworkRules": [
+            {
+              "id": "[concat(resourceId('Microsoft.Network/virtualNetworks/subnets',variables('vnetName'), 'mlcomputes'))]",
+              "action": "Allow"
+            },
+            {
+              "id": "[concat(resourceId('Microsoft.Network/virtualNetworks/subnets',variables('vnetName'), 'adb-public-subnet'))]",
+              "action": "Allow"
+            }
+          ],
+          "ipRules": [
+            {
+              "value": "[parameters('grantPublicIp')]",
+              "action": "Allow"
+            }
+          ],
+          "defaultAction": "Deny"
+        },
+        "accessTier": "Hot",
+        "supportsHttpsTrafficOnly": true,
+        "isHnsEnabled": true
+      },
+      "resources": [
+        {
+          "name": "default/datalake",
+          "type": "blobServices/containers",
+          "apiVersion": "2018-07-01",
+          "dependsOn": [
+            "[resourceId('Microsoft.Storage/storageAccounts', variables('adlsName'))]"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "Microsoft.Storage/storageAccounts/providers/roleAssignments",
+      "apiVersion": "2020-03-01-preview",
+      "name": "[concat(variables('adlsName'), '/Microsoft.Authorization/',  guid(concat(resourceGroup().id, '/', variables('storageBlobDataContributorRoleID'), '/', variables('adlsName'))))]",
+      "dependsOn": [
+        "[resourceId('Microsoft.DataFactory/factories', variables('adfName'))]",
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('adlsName'))]"
+      ],
+      "properties": {
+        "scope": "[resourceId('Microsoft.Storage/storageAccounts', variables('adlsName'))]",
+        "roleDefinitionId": "[resourceId('Microsoft.Authorization/roleDefinitions', variables('storageBlobDataContributorRoleID'))]",
+        "principalId": "[reference(resourceId('Microsoft.DataFactory/factories', variables('adfName')), '2018-06-01', 'full').identity.principalId]",
+        "principalType": "ServicePrincipal"
+      }
+    },
+    {
+      "type": "Microsoft.DataFactory/factories",
+      "apiVersion": "2018-06-01",
+      "name": "[variables('adfName')]",
+      "location": "[parameters('location')]",
+      "identity": {
+        "type": "SystemAssigned"
+      },
+
+      "properties": "[if(equals( parameters('isDataFactoryUseGit'),'1'),variables('gitconfjsonvalue'), json('null'))]",
+      "resources": [
+        {
+          "name": "[concat(variables('adfName'), '/AzureKeyVault')]",
+          "type": "Microsoft.DataFactory/factories/linkedServices",
+          "apiVersion": "2018-06-01",
+          "properties": {
+            "annotations": [],
+            "type": "AzureKeyVault",
+            "typeProperties": {
+              "baseUrl": "[variables('akvurl')]"
+            }
+          },
+          "dependsOn": [
+            "[resourceId('Microsoft.KeyVault/vaults', variables('akvName'))]",
+            "[resourceId('Microsoft.DataFactory/factories',variables('adfName'))]"
+          ]
+        },
+        {
+          "name": "[concat(variables('adfName'), '/AzureDatabricks')]",
+          "type": "Microsoft.DataFactory/factories/linkedServices",
+          "apiVersion": "2018-06-01",
+          "properties": {
+            "annotations": [],
+            "type": "AzureDatabricks",
+            "typeProperties": {
+              "domain": "[concat('https://',reference(resourceId('Microsoft.Databricks/workspaces', variables('adbWorkspaceName')), '2018-04-01', 'full').properties.workspaceUrl)]",
+              "accessToken": {
+                "type": "AzureKeyVaultSecret",
+                "store": {
+                  "referenceName": "AzureKeyVault",
+                  "type": "LinkedServiceReference"
+                },
+                "secretName": "databrickssecret"
+              },
+              "newClusterNodeType": "Standard_DS3_v2",
+              "newClusterNumOfWorker": "2:4",
+              "newClusterSparkEnvVars": {
+                "PYSPARK_PYTHON": "/databricks/python3/bin/python3"
+              },
+              "newClusterVersion": "6.6.x-scala2.11",
+              "newClusterInitScripts": [
+                "dbfs:/databricks/scripts/azure-sqldb-spark-install.sh"
+              ]
+            }
+          },
+          "dependsOn": [
+            "[resourceId('Microsoft.DataFactory/factories/linkedServices',variables('adfName'), 'AzureKeyVault')]",
+            "[resourceId('Microsoft.DataFactory/factories',variables('adfName'))]"
+          ]
+        },
+        {
+          "name": "[concat(variables('adfName'), '/AzureDataLakeStorage')]",
+          "type": "Microsoft.DataFactory/factories/linkedServices",
+          "apiVersion": "2018-06-01",
+          "properties": {
+            "annotations": [],
+            "type": "AzureBlobFS",
+            "typeProperties": {
+              "url": "[variables('adlsurl')]"
+            }
+          },
+          "dependsOn": [
+            "[resourceId('Microsoft.KeyVault/vaults', variables('akvName'))]",
+            "[resourceId('Microsoft.Storage/storageAccounts', variables('adlsName'))]",
+            "[resourceId('Microsoft.DataFactory/factories',variables('adfName'))]"
+          ]
+        },
+        {
+          "name": "[concat(variables('adfName'), '/AzureSqlDatabase')]",
+          "type": "Microsoft.DataFactory/factories/linkedServices",
+          "apiVersion": "2018-06-01",
+          "properties": {
+            "annotations": [],
+            "type": "AzureSqlDatabase",
+            "typeProperties": {
+              "connectionString": {
+                "type": "AzureKeyVaultSecret",
+                "store": {
+                  "referenceName": "AzureKeyVault",
+                  "type": "LinkedServiceReference"
+                },
+                "secretName": "sqlConnectionString"
+              }
+            },
+            "connectVia": {
+              "referenceName": "[variables('SelfhostedIRName')]",
+              "type": "IntegrationRuntimeReference"
+				    }
+          },
+          "dependsOn": [
+            "[resourceId('Microsoft.KeyVault/vaults', variables('akvName'))]",
+            "[resourceId('Microsoft.DataFactory/factories',variables('adfName'))]",
+            "[resourceId('Microsoft.Sql/servers', variables('sqlServerName'))]",
+            "[resourceId('Microsoft.KeyVault/vaults', variables('akvName'))]",
+            "[concat(resourceId('Microsoft.DataFactory/factories',variables('adfName')), '/linkedServices/AzureKeyVault')]",
+            "[resourceId(resourceGroup().name, 'Microsoft.Resources/deployments', 'irtemp')]"
+          ]
+        }
+      ]
+    },
+    {
+      "type": "Microsoft.Databricks/workspaces",
+      "apiVersion": "2018-04-01",
+      "location": "[parameters('location')]",
+      "name": "[variables('adbWorkspaceName')]",
+      "sku": {
+        "name": "premium"
+      },
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/networkSecurityGroups', variables('adbNsgName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('vnetName'))]"
+      ],
+      "comments": "The resource group specified will be locked after deployment.",
+      "properties": {
+        "ManagedResourceGroupId": "[variables('managedResourceGroupId')]",
+        "parameters": {
+          "customVirtualNetworkId": {
+            "value": "[resourceId('Microsoft.Network/virtualNetworks', variables('vnetName'))]"
+          },
+          "customPublicSubnetName": {
+            "value": "adb-public-subnet"
+          },
+          "customPrivateSubnetName": {
+            "value": "adb-private-subnet"
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.KeyVault/vaults",
+      "apiVersion": "2016-10-01",
+      "name": "[variables('akvName')]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Storage/storageAccounts',variables('adlsName'))]",
+        "[resourceId('Microsoft.DataFactory/factories',variables('adfName'))]",
+        "[resourceId('Microsoft.Databricks/workspaces',variables('adbWorkspaceName'))]"
+      ],
+      "resources": [
+        {
+          "type": "Microsoft.KeyVault/vaults/secrets",
+          "apiVersion": "2016-10-01",
+          "name": "[concat(variables('akvName'), '/datalakeKey')]",
+          "location": "[parameters('location')]",
+          "dependsOn": [
+            "[resourceId('Microsoft.KeyVault/vaults', variables('akvName'))]",
+            "[resourceId('Microsoft.Storage/storageAccounts',variables('adlsName'))]"
+          ],
+          "properties": {
+            "value": "[listKeys(resourceId('Microsoft.Storage/storageAccounts',variables('adlsName')), providers('Microsoft.Storage', 'storageAccounts').apiVersions[0]).keys[0].value]",
+            "attributes": {
+              "enabled": true
+            },
+            "contentType": "Blob Storage Account Key"
+          }
+        },
+        {
+          "type": "Microsoft.KeyVault/vaults/secrets",
+          "apiVersion": "2016-10-01",
+          "name": "[concat(variables('akvName'), '/sqladminId')]",
+          "location": "[parameters('location')]",
+          "dependsOn": [
+            "[resourceId('Microsoft.KeyVault/vaults', variables('akvName'))]"
+          ],
+          "properties": {
+            "value": "[parameters('sqlAdministratorLogin')]",
+            "attributes": {
+              "enabled": true
+            },
+            "contentType": "SQL Administorator Id"
+          }
+        },
+        {
+          "type": "Microsoft.KeyVault/vaults/secrets",
+          "apiVersion": "2016-10-01",
+          "name": "[concat(variables('akvName'), '/sqlAdminPassword')]",
+          "location": "[parameters('location')]",
+          "dependsOn": [
+            "[resourceId('Microsoft.KeyVault/vaults', variables('akvName'))]"
+          ],
+          "properties": {
+            "value": "[parameters('sqlAdministratorLoginPassword')]",
+            "attributes": {
+              "enabled": true
+            },
+            "contentType": "SQL Administorator Password"
+          }
+        },
+        {
+          "type": "Microsoft.KeyVault/vaults/secrets",
+          "apiVersion": "2016-10-01",
+          "name": "[concat(variables('akvName'), '/sqlConnectionString')]",
+          "location": "[parameters('location')]",
+          "dependsOn": [
+            "[resourceId('Microsoft.KeyVault/vaults', variables('akvName'))]"
+          ],
+          "properties": {
+            "value": "[variables('sqlConnectionString')]",
+            "attributes": {
+              "enabled": true
+            },
+            "contentType": "SQL Server Connection String"
+          }
+        },
+        {
+          "apiVersion": "2018-02-14",
+          "type": "Microsoft.KeyVault/vaults/secrets",
+          "dependsOn": [
+            "[concat('Microsoft.KeyVault/vaults/', variables('akvName'))]"
+          ],
+          "name": "[concat(variables('akvName'), '/', 'ARMStorageSaSToken')]",
+          "properties": {
+            "value": "[concat('?',listAccountSas(variables('armStgStorageName'), '2018-07-01', parameters('armStgAccountSasProperties')).accountSasToken)]",
+            "contentType": "ARM StageStorageAccount SAS Token"
+          }
+        },
+
+        {
+          "apiVersion": "2018-02-14",
+          "type": "Microsoft.KeyVault/vaults/secrets",
+          "dependsOn": [
+            "[concat('Microsoft.KeyVault/vaults/', variables('akvName'))]"
+          ],
+          "name": "[concat(variables('akvName'), '/', 'sqlServerUrl')]",
+          "properties": {
+            "value": "[variables('sqlServerURL')]",
+            "contentType": "SQL Server URL"
+          }
+        },
+        {
+          "apiVersion": "2018-02-14",
+          "type": "Microsoft.KeyVault/vaults/secrets",
+          "dependsOn": [
+            "[concat('Microsoft.KeyVault/vaults/', variables('akvName'))]"
+          ],
+          "name": "[concat(variables('akvName'), '/', 'sqlDatabaseName')]",
+          "properties": {
+            "value": "[variables('sqlDatabaseName')]",
+            "contentType": "SQL Database Name"
+          }
+        },
+        {
+          "apiVersion": "2018-02-14",
+          "type": "Microsoft.KeyVault/vaults/secrets",
+          "dependsOn": [
+            "[concat('Microsoft.KeyVault/vaults/', variables('akvName'))]"
+          ],
+          "name": "[concat(variables('akvName'), '/', 'DataLakeAccountName')]",
+          "properties": {
+            "value": "[variables('adlsName')]",
+            "contentType": "DataLakeAccountName"
+          }
+        }
+      ],
+      "properties": {
+        "tenantId": "[subscription().tenantId]",
+        "sku": {
+          "name": "standard",
+          "family": "A"
+        },
+        "accessPolicies": [
+          {
+            "tenantId": "[subscription().tenantId]",
+            "objectId": "[reference(resourceId('Microsoft.DataFactory/factories', variables('adfName')), '2018-06-01', 'full').identity.principalId]",
+            "permissions": {
+              "secrets": [
+                "get",
+                "list"
+              ]
+            }
+          },
+          {
+            "tenantId": "[subscription().tenantId]",
+            "objectId": "[parameters('AzureDatabricksId')]",
+            "permissions": {
+              "secrets": [
+                "get",
+                "list"
+              ]
+            }
+          },
+          {
+            "tenantId": "[subscription().tenantId]",
+            "objectId": "[parameters('DevOpsAppId')]",
+            "permissions": {
+              "secrets": [
+                "get",
+                "list"
+              ]
+            }
+          }
+        ],
+        "enabledForDeployment": false,
+        "enabledForDiskEncryption": false,
+        "enabledForTemplateDeployment": true,
+        "enableSoftDelete": true
+      }
+    },
+    {
+      "type": "Microsoft.Resources/deployments",
+      "apiVersion": "2019-10-01",
+      "name": "irtemp",
+      "dependsOn": [
+        "[resourceId('Microsoft.DataFactory/factories',variables('adfName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('vnetName'))]"
+      ],
+      "properties": {
+        "mode": "Incremental",
+        "templateLink": {
+          "uri": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/101-vms-with-selfhost-integration-runtime/azuredeploy.json",
+          "contentVersion": "1.0.0.0"
+        },
+        "parameters": {
+          "existingDataFactoryName": {
+            "value": "[variables('adfName')]"
+          },
+          "existingDataFactoryResourceGroup": {
+            "value": "[resourceGroup().name]"
+          },
+          "existingDataFactoryVersion": {
+            "value": "V2"
+          },
+          "IntegrationRuntimeName": {
+            "value": "[variables('SelfhostedIRName')]"
+          },
+          "NodeCount": {
+            "value": 1
+          },
+          "vmSize": {
+            "value": "[parameters('gwSKU')]"
+          },
+          "adminUserName": {
+            "value": "[parameters('VMAdministratorLogin')]"
+          },
+          "adminPassword": {
+            "value": "[parameters('VMAdministratorLoginPassword')]"
+          },
+          "existingVirtualNetworkName": {
+            "value": "[variables('vnetName')]"
+          },
+          "existingVnetLocation": {
+            "value": "[parameters('location')]"
+          },
+          "existingVnetResourceGroupName": {
+            "value": "[resourceGroup().name]"
+          },
+          "existingSubnetInYourVnet": {
+            "value": "[variables('gatewaySubnetName')]"
+          },
+          "_artifactsLocation": {
+            "value": "https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/101-vms-with-selfhost-integration-runtime/"
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Network/networkSecurityGroups",
+      "apiVersion": "2020-04-01",
+      "name": "[concat(variables('SelfhostedIRName'),'nsg')]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId(resourceGroup().name, 'Microsoft.Resources/deployments', 'irtemp')]"
+      ],
+      "properties": {
+        "securityRules": [
+          {
+            "name": "default-allow-rdp",
+            "properties": {
+              "priority": 1000,
+              "protocol": "Tcp",
+              "destinationPortRange": "3389",
+              "access": "Allow",
+              "direction": "Inbound",
+              "sourcePortRange": "*",
+              "destinationAddressPrefix": "*",
+              "sourceAddressPrefix": "[parameters('grantPublicIp')]"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "apiVersion": "2018-11-01",
+      "name": "[variables('pbigwDiagnStorageName')]",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "Standard_LRS"
+      },
+      "kind": "Storage",
+      "properties": {}
+    },
+    {
+      "type": "Microsoft.Network/publicIPAddresses",
+      "apiVersion": "2018-11-01",
+      "name": "[variables('pbigwpublicIPAddressName')]",
+      "location": "[parameters('location')]",
+      "properties": {
+        "publicIPAllocationMethod": "Dynamic",
+        "dnsSettings": {
+          "domainNameLabel": "[variables('pbigwDnsLabal')]"
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Network/networkInterfaces",
+      "apiVersion": "2018-11-01",
+      "name": "[variables('pbigwNicName')]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Network/publicIPAddresses/', variables('pbigwpublicIPAddressName'))]",
+        "[resourceId('Microsoft.Network/virtualNetworks/', variables('vnetName'))]"
+      ],
+      "properties": {
+        "ipConfigurations": [
+          {
+            "name": "ipconfig1",
+            "properties": {
+              "privateIPAllocationMethod": "Dynamic",
+              "publicIPAddress": {
+                "id": "[resourceId('Microsoft.Network/publicIPAddresses',variables('pbigwpublicIPAddressName'))]"
+              },
+              "subnet": {
+                "id": "[variables('gatewaySubnetId')]"
+              }
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "Microsoft.Compute/virtualMachines",
+      "apiVersion": "2018-10-01",
+      "name": "[variables('pbigwVMName')]",
+      "location": "[parameters('location')]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Storage/storageAccounts/', variables('pbigwDiagnStorageName'))]",
+        "[resourceId('Microsoft.Network/networkInterfaces/', variables('pbigwNicName'))]"
+      ],
+      "properties": {
+        "hardwareProfile": {
+          "vmSize": "[parameters('gwSKU')]"
+        },
+        "osProfile": {
+          "computerName": "[variables('pbigwVMName')]",
+          "adminUsername": "[parameters('VMAdministratorLogin')]",
+          "adminPassword": "[parameters('VMAdministratorLoginPassword')]"
+        },
+        "storageProfile": {
+          "imageReference": {
+            "publisher": "MicrosoftWindowsServer",
+            "offer": "WindowsServer",
+            "sku": "2019-Datacenter",
+            "version": "latest"
+          },
+          "osDisk": {
+            "createOption": "FromImage"
+          },
+          "dataDisks": [
+            {
+              "diskSizeGB": 1023,
+              "lun": 0,
+              "createOption": "Empty"
+            }
+          ]
+        },
+        "networkProfile": {
+          "networkInterfaces": [
+            {
+              "id": "[resourceId('Microsoft.Network/networkInterfaces',variables('pbigwNicName'))]"
+            }
+          ]
+        },
+        "diagnosticsProfile": {
+          "bootDiagnostics": {
+            "enabled": true,
+            "storageUri": "[reference(resourceId('Microsoft.Storage/storageAccounts/', variables('pbigwDiagnStorageName'))).primaryEndpoints.blob]"
+          }
+        }
+      }
+    },
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "name": "[variables('sqlAuditStorageName')]",
+      "apiVersion": "2019-06-01",
+      "location": "[parameters('location')]",
+      "sku": {
+        "name": "Standard_LRS"
+      },
+      "kind": "StorageV2",
+      "properties": {
+        "networkAcls": {
+          "bypass": "AzureServices",
+          "defaultAction": "Deny"
+        }
+      }
+    },
+    {
+
+      "type": "Microsoft.Storage/storageAccounts/providers/roleAssignments",
+      "apiVersion": "2020-03-01-preview",
+      "name": "[concat(variables('sqlAuditStorageName'), '/Microsoft.Authorization/', variables('uniqueRoleGuid'))]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Sql/servers', variables('sqlServerName'))]",
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('sqlAuditStorageName'))]"
+      ],
+      "properties": {
+        "roleDefinitionId": "[variables('StorageBlobContributor')]",
+        "principalId": "[reference(resourceId('Microsoft.Sql/servers', variables('sqlServerName')), '2019-06-01-preview', 'Full').identity.principalId]",
+        "scope": "[resourceId('Microsoft.Storage/storageAccounts', variables('sqlAuditStorageName'))]",
+        "principalType": "ServicePrincipal"
+      }
+    },
+    {
+      "type": "Microsoft.Storage/storageAccounts",
+      "apiVersion": "2019-06-01",
+      "name": "[variables('armStgStorageName')]",
+      "location": "[parameters('location')]",
+      "tags": {},
+      "sku": {
+        "name": "Standard_LRS"
+      },
+      "kind": "StorageV2",
+      "properties": {
+        "accessTier": "Hot",
+        "supportsHttpsTrafficOnly": false,
+        "isHnsEnabled": false
+      },
+      "resources": [
+        {
+          "name": "default/armstage",
+          "type": "blobServices/containers",
+          "apiVersion": "2018-07-01",
+          "dependsOn": [
+            "[resourceId('Microsoft.Storage/storageAccounts', variables('armStgStorageName'))]"
+          ]
+        }
+      ]
+    }
+
+  ],
+  "outputs": {
+    "databricksId": {
+      "type": "string",
+      "value": "[reference(resourceId('Microsoft.Databricks/workspaces', variables('adbWorkspaceName')), '2018-04-01', 'full').properties.workspaceId]"
+    }
+  }
+}
