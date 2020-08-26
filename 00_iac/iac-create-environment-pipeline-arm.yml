@@ -5,14 +5,14 @@ trigger:
       - master
   paths:
     include:
-      - 00_Environment/arm-templates/*
+      - 00_iac/arm-templates/*
 pr:
   branches:
     include:
       - master
   paths:
     include:
-      - 00_Environment/arm-templates/*
+      - 00_iac/arm-templates/*
 
 pool:
   vmImage: "ubuntu-latest"
@@ -28,7 +28,7 @@ steps:
       resourceGroupName: "$(RESOURCE_GROUP)"
       location: $(LOCATION)
       templateLocation: "Linked artifact"
-      csmFile: "$(Build.SourcesDirectory)/00_Environment/arm-templates/cloud-environment.json"
+      csmFile: "$(Build.SourcesDirectory)/00_iac/arm-templates/cloud-environment.json"
       overrideParameters: "- -baseName $(BASE_NAME) -location $(LOCATION) -sqlAdministratorLogin $(SQL_ADMINISTRATOR_LOGIN) -sqlAdministratorLoginPassword $(SQL_ADMINISTRATOR_LOGIN_PASSWORD)  -grantPublicIp $(GRANT_PUBLIC_IP) -AzureDatabricksId $(AZURE_DATABRICKS_ID) -DevOpsAppId  $(AZURE_RM_SVC_CON_ID) -VMAdministratorLogin $(VM_ADMINISTRATOR_LOGIN) -VMAdministratorLogin $(VM_ADMINISTRATOR_LOGIN)"
       deploymentMode: "Incremental"
     displayName: "Deploy resources to Azure"
