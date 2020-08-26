@@ -113,7 +113,7 @@
     "SelfhostedIRName": "[concat(parameters('baseName'),'-ir')]",
 
     "sqlServerName": "[concat(toLower(parameters('baseName')),'-sql')]",
-    "sqlDatabaseName": "[concat(toLower(parameters('baseName')),'-db')]",
+    "sqlDatabaseName": "[concat(toLower(parameters('baseName')),'-dw')]",
     "sqlAuditStorageName": "[concat(replace(toLower(parameters('baseName')),'-',''),'sqlaudit')]",
     "uniqueRoleGuid": "[guid(resourceId('Microsoft.Storage/storageAccounts',  variables('sqlAuditStorageName')), variables('storageBlobContributor'), resourceId('Microsoft.Sql/servers', variables('sqlServerName')))]",
     "sqlConnectionString": "[concat('Integrated Security=False;Encrypt=True;Connection Timeout=30;Data Source=',variables('sqlServerName'),'.database.windows.net;Initial Catalog=',variables('sqlDatabaseName'))]",
@@ -692,12 +692,12 @@
           ]
         },
         {
-          "name": "[concat(variables('adfName'), '/AzureSqlDatabase')]",
+          "name": "[concat(variables('adfName'), '/AzureSynapseAnalytics')]",
           "type": "Microsoft.DataFactory/factories/linkedServices",
           "apiVersion": "2018-06-01",
           "properties": {
             "annotations": [],
-            "type": "AzureSqlDatabase",
+            "type": "AzureSqlDW",
             "typeProperties": {
               "connectionString": {
                 "type": "AzureKeyVaultSecret",
