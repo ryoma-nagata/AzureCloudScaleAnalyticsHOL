@@ -630,6 +630,21 @@
       }
     },
     {
+      "type": "Microsoft.Storage/storageAccounts/providers/roleAssignments",
+      "apiVersion": "2020-03-01-preview",
+      "name": "[concat(variables('adlsName'), '/Microsoft.Authorization/',  guid(concat(resourceGroup().id, '/', variables('storageBlobDataContributorRoleID'), '/', variables('adlsName'))))]",
+      "dependsOn": [
+        "[resourceId('Microsoft.Sql/servers', variables('sqlDatabaseName'))]",
+        "[resourceId('Microsoft.Storage/storageAccounts', variables('adlsName'))]"
+      ],
+      "properties": {
+        "scope": "[resourceId('Microsoft.Storage/storageAccounts', variables('adlsName'))]",
+        "roleDefinitionId": "[resourceId('Microsoft.Authorization/roleDefinitions', variables('storageBlobDataContributorRoleID'))]",
+        "principalId": "[reference(resourceId('Microsoft.Sql/servers', variables('sqlDatabaseName')), '2018-06-01', 'full').identity.principalId]",
+        "principalType": "ServicePrincipal"
+      }
+    },
+    {
       "type": "Microsoft.DataFactory/factories",
       "apiVersion": "2018-06-01",
       "name": "[variables('adfName')]",
