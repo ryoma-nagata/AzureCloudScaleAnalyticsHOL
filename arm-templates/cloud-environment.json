@@ -521,7 +521,8 @@
       "name": "[concat(variables('sqlServerName'), '/',variables('gatewaySubnetName'))]",
       "dependsOn": [
         "[resourceId('Microsoft.Sql/servers', variables('sqlServerName'))]",
-        "[resourceId('Microsoft.Network/virtualNetworks', variables('vnetName'))]"
+        "[resourceId('Microsoft.Network/virtualNetworks', variables('vnetName'))]",
+        "[variables('gatewayNsgId')]"
       ],
       "properties": {
         "virtualNetworkSubnetId": "[concat(resourceId('Microsoft.Network/virtualNetworks/subnets',variables('vnetName'), variables('gatewaySubnetName')))]",
