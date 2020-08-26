@@ -512,7 +512,22 @@
             "state": "Enabled",
             "storageEndpoint": "[concat('https://',variables('sqlAuditStorageName'),'.blob.core.windows.net')]"
           }
-        }
+        },
+        {
+              "comments": "Transparent Data Encryption",
+              "name": "current",
+              "type": "transparentDataEncryption",
+              "apiVersion": "2014-04-01",
+              "properties": {
+                "status":"Enabled"
+              },
+              "dependsOn": [
+                            "[variables('sqlServerName')]",
+            "[variables('sqlAuditStorageName')]",
+            "[variables('sqlDatabaseName')]"
+                
+              ]
+            }
       ]
     },
     {
