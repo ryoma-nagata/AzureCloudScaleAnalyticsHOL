@@ -640,7 +640,7 @@
       "properties": {
         "scope": "[resourceId('Microsoft.Storage/storageAccounts', variables('adlsName'))]",
         "roleDefinitionId": "[resourceId('Microsoft.Authorization/roleDefinitions', variables('storageBlobDataContributorRoleID'))]",
-        "principalId": "[reference(resourceId('Microsoft.Sql/servers', variables('sqlServerName')), '2018-06-01', 'full').identity.principalId]",
+        "principalId": "[reference(resourceId('Microsoft.Sql/servers', variables('sqlServerName')), '2019-06-01-preview', 'full').identity.principalId]",
         "principalType": "ServicePrincipal"
       }
     },
