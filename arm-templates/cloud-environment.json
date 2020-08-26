@@ -531,19 +531,6 @@
     {
       "type": "Microsoft.Sql/servers/virtualNetworkRules",
       "apiVersion": "2015-05-01-preview",
-      "name": "[concat(variables('sqlServerName'), '/','mlcomputes')]",
-      "dependsOn": [
-        "[resourceId('Microsoft.Sql/servers', variables('sqlServerName'))]",
-        "[resourceId('Microsoft.Network/virtualNetworks', variables('vnetName'))]"
-      ],
-      "properties": {
-        "virtualNetworkSubnetId": "[concat(resourceId('Microsoft.Network/virtualNetworks/subnets',variables('vnetName'), 'mlcomputes'))]",
-        "ignoreMissingVnetServiceEndpoint": false
-      }
-    },
-    {
-      "type": "Microsoft.Sql/servers/virtualNetworkRules",
-      "apiVersion": "2015-05-01-preview",
       "name": "[concat(variables('sqlServerName'), '/','adbpublic')]",
       "dependsOn": [
         "[resourceId('Microsoft.Sql/servers', variables('sqlServerName'))]",
@@ -583,10 +570,6 @@
         "networkAcls": {
           "bypass": "AzureServices",
           "virtualNetworkRules": [
-            {
-              "id": "[concat(resourceId('Microsoft.Network/virtualNetworks/subnets',variables('vnetName'), 'mlcomputes'))]",
-              "action": "Allow"
-            },
             {
               "id": "[concat(resourceId('Microsoft.Network/virtualNetworks/subnets',variables('vnetName'), 'adb-public-subnet'))]",
               "action": "Allow"
