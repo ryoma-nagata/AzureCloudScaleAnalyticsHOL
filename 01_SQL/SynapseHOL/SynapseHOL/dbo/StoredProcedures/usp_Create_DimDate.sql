@@ -21,7 +21,7 @@ BEGIN
     CREATE TABLE [dbo].[DimDate] WITH (DISTRIBUTION = REPLICATE)
     AS
     SELECT 
-		convert(int ,convert(nvarchar(10),[date],112)) AS [Datekey]  ,
+		convert(datetime,[date]) AS [Datekey],
         [Date],
         DAY([date]) AS [Day],
 		LEFT(DATENAME(WEEKDAY,[date]),1) AS [Weekday]  ,
