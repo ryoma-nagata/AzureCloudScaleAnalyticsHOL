@@ -124,7 +124,7 @@
                         },
                         "userProperties": [],
                         "typeProperties": {
-                            "notebookPath": "/Shared/SparkETL_Contoso/99_Init_Create_Delta"
+                            "notebookPath": "/Shared/SparkETL/99_Init_Create_Delta"
                         },
                         "linkedServiceName": {
                             "referenceName": "AzureDatabricks",
@@ -393,7 +393,7 @@
                         },
                         "userProperties": [],
                         "typeProperties": {
-                            "notebookPath": "/Shared/SparkETL_Contoso/01_FactOnlineSales/01_FactOnlineSales_Load"
+                            "notebookPath": "/Shared/SparkETL/01_FactOnlineSales/01_FactOnlineSales_Load"
                         },
                         "linkedServiceName": {
                             "referenceName": "AzureDatabricks",
@@ -420,7 +420,7 @@
                         },
                         "userProperties": [],
                         "typeProperties": {
-                            "notebookPath": "/Shared/SparkETL_Contoso/02_DimProduct/01_DimProduct_Load"
+                            "notebookPath": "/Shared/SparkETL/02_DimProduct/01_DimProduct_Load"
                         },
                         "linkedServiceName": {
                             "referenceName": "AzureDatabricks",

@@ -34,7 +34,6 @@ DevOpsパイプラインの設定を行います。
 ![CreateLibrary](.media/CreateVariableGroup.png)
 
 名称を **「devops-adf-vg」** としたうえで、「Link secrets from an Azure key vault as variables」をオンに変更し、設定を行います。  
-Variablesの設定は「+Add」ボタンから「ARMStorageSaSToken」を選択します。
 
 ![VariableGroupSetting](.media/SetVariableGroup.png)
 
@@ -43,6 +42,8 @@ Variablesの設定は「+Add」ボタンから「ARMStorageSaSToken」を選択�
 | Azure subsctiption | azure-resouce-connection | リストから選択します。 |
 | Key vault name | 作成したKeyVault(Azure ML用ではないもの) |リストから選択します。 |
 
+
+Variablesの設定は「+Add」ボタンから「**ARMStorageSaSToken**」を選択します。  
 設定が完了したら「Save」をクリックします。
 
 ---
@@ -74,9 +75,8 @@ YAMLファイルの内容が表示されるので、「RUN」をクリックし�
 
 >補足:  
 この時点で、Data Factoryのリソースが反映されていることが確認できます。
-![adf_resource](.media/adf_resource.png)
 
-管理ハブに移動して、「Git Configuration」→「Set up code repository」をクリックします。
+Manageハブに移動して、「Git Configuration」→「Set up code repository」をクリックします。
 
 ![adf_setrepo01](.media/adf_set_repo01.png)
 

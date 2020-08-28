@@ -332,14 +332,14 @@
       "properties": {
         "addressSpace": {
           "addressPrefixes": [
-            "10.20.0.0/14"
+            "23.20.0.0/14"
           ]
         },
         "subnets": [
           {
             "name": "[variables('gatewaySubnetName')]",
             "properties": {
-              "addressPrefix": "10.20.0.0/24",
+              "addressPrefix": "23.20.0.0/24",
               "serviceEndpoints": [
                 {
                   "service": "Microsoft.Sql",
@@ -365,7 +365,7 @@
           {
             "name": "adb-public-subnet",
             "properties": {
-              "addressPrefix": "10.21.4.0/22",
+              "addressPrefix": "23.21.4.0/22",
               "serviceEndpoints": [
                 {
                   "service": "Microsoft.Storage",
@@ -398,7 +398,7 @@
           {
             "name": "adb-private-subnet",
             "properties": {
-              "addressPrefix": "10.21.8.0/22",
+              "addressPrefix": "23.21.8.0/22",
               "serviceEndpoints": [
                 {
                   "service": "Microsoft.Storage",
@@ -492,7 +492,7 @@
       "sku": {
         "name": "DataWarehouse",
         "tier": "DataWarehouse",
-        "capacity": 900
+        "capacity": 4500
       },
       "kind": "v12.0,user,datawarehouse,gen2",
       "properties": {
@@ -545,7 +545,7 @@
             "minResourcePercent": 0,
             "maxResourcePercent": 100,
             "minResourcePercentPerRequest": 22,
-            "maxResourcePercentPerRequest": 22,
+            "maxResourcePercentPerRequest": 50,
             "importance": "normal",
             "queryExecutionTimeout": 0
           }
