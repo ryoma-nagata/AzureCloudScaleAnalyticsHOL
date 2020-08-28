@@ -62,5 +62,7 @@
   <ItemGroup>
     <Build Include="DimProduct.sql" />
     <Build Include="FactOnlineSales.sql" />
+    <Build Include="stg_DimProduct.sql" />
+    <Build Include="stg_FactOnlineSales.sql" />
   </ItemGroup>
 </Project>
