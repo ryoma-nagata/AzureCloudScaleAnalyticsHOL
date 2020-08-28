@@ -870,7 +870,7 @@
             "[resourceId('Microsoft.KeyVault/vaults', variables('akvName'))]"
           ],
           "properties": {
-            "value": "[parameters('ELTLoaderLoginPassword')]",
+            "value": "[parameters('ELTLoaderLogin')]",
             "attributes": {
               "enabled": true
             },
