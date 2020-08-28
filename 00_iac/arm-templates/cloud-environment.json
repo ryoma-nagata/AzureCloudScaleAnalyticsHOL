@@ -799,7 +799,7 @@
             "[resourceId('Microsoft.DataFactory/factories',variables('adfName'))]",
             "[resourceId('Microsoft.Sql/servers', variables('sqlServerName'))]",
             "[resourceId('Microsoft.KeyVault/vaults', variables('akvName'))]",
-            "[concat(resourceId('Microsoft.DataFactory/factories',variables('adfName')), '/linkedServices/AzureKeyVault')]",
+            "[concat(resourceId('Microsoft.DataFactory/factories',variables('adfName')), '/linkedServices/',variables('akvName'))]",
             "[resourceId(resourceGroup().name, 'Microsoft.Resources/deployments', 'irtemp')]"
           ]
         }
