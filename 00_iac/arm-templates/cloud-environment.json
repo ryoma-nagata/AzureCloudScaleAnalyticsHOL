@@ -747,7 +747,7 @@
                 "annotations": [],
                 "type": "AzureBlobStorage",
                 "typeProperties": {
-                    "sasUri": "https://nytaxiblob.blob.core.windows.net?"
+                    "sasUri": "https://nytaxiblob.blob.core.windows.net?''"
                 }
             },
           "dependsOn": [
