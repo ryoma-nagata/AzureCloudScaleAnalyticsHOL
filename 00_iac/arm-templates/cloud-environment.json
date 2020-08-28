@@ -932,6 +932,30 @@
             "value": "[variables('adlsName')]",
             "contentType": "DataLakeAccountName"
           }
+        },
+        {
+          "apiVersion": "2018-02-14",
+          "type": "Microsoft.KeyVault/vaults/secrets",
+          "dependsOn": [
+            "[concat('Microsoft.KeyVault/vaults/', variables('akvName'))]"
+          ],
+          "name": "[concat(variables('akvName'), '/', 'SQLDWName')]",
+          "properties": {
+            "value": "[variables('sqlDatabaseName')]",
+            "contentType": "SQLDWName"
+          }
+        },
+        {
+          "apiVersion": "2018-02-14",
+          "type": "Microsoft.KeyVault/vaults/secrets",
+          "dependsOn": [
+            "[concat('Microsoft.KeyVault/vaults/', variables('akvName'))]"
+          ],
+          "name": "[concat(variables('akvName'), '/', 'SQLServerName')]",
+          "properties": {
+            "value": "[variables('sqlServerName')]",
+            "contentType": "SQLServerName"
+          }
         }
       ],
       "properties": {
