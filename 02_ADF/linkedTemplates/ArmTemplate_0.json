@@ -534,6 +534,43 @@
                             "referenceName": "AzureSynapseAnalytics",
                             "type": "LinkedServiceReference"
                         }
+                    },
+                    {
+                        "name": "Create_DimDate",
+                        "type": "SqlServerStoredProcedure",
+                        "dependsOn": [
+                            {
+                                "activity": "SQL Awake",
+                                "dependencyConditions": [
+                                    "Succeeded"
+                                ]
+                            }
+                        ],
+                        "policy": {
+                            "timeout": "7.00:00:00",
+                            "retry": 0,
+                            "retryIntervalInSeconds": 30,
+                            "secureOutput": false,
+                            "secureInput": false
+                        },
+                        "userProperties": [],
+                        "typeProperties": {
+                            "storedProcedureName": "[[dbo].[usp_Create_DimDate]",
+                            "storedProcedureParameters": {
+                                "endDateYYYYMMDD": {
+                                    "value": "20091231",
+                                    "type": "String"
+                                },
+                                "startDateYYYYMMDD": {
+                                    "value": "20070101",
+                                    "type": "String"
+                                }
+                            }
+                        },
+                        "linkedServiceName": {
+                            "referenceName": "AzureSynapseAnalytics",
+                            "type": "LinkedServiceReference"
+                        }
                     }
                 ],
                 "annotations": []
