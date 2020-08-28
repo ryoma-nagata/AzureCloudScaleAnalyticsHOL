@@ -691,7 +691,7 @@
       "properties": "[if(equals( parameters('isDataFactoryUseGit'),'1'),variables('gitconfjsonvalue'), json('null'))]",
       "resources": [
         {
-          "name": "[concat(variables('adfName'), '/',variables('akvName'))]",
+          "name": "[concat(variables('adfName'), '/AzureKeyVault')]",
           "type": "Microsoft.DataFactory/factories/linkedServices",
           "apiVersion": "2018-06-01",
           "properties": {
@@ -707,7 +707,7 @@
           ]
         },
         {
-          "name": "[concat(variables('adfName'), '/',variables('adbWorkspaceName'))]",
+          "name": "[concat(variables('adfName'), '/AzureDatabricks')]",
           "type": "Microsoft.DataFactory/factories/linkedServices",
           "apiVersion": "2018-06-01",
           "properties": {
@@ -718,7 +718,7 @@
               "accessToken": {
                 "type": "AzureKeyVaultSecret",
                 "store": {
-                  "referenceName": "[variables('akvName')]",
+                  "referenceName": "AzureKeyVault",
                   "type": "LinkedServiceReference"
                 },
                 "secretName": "databrickssecret"
@@ -729,13 +729,11 @@
                 "PYSPARK_PYTHON": "/databricks/python3/bin/python3"
               },
               "newClusterVersion": "7.0.x-scala2.12",
-              "newClusterInitScripts": [
-                "dbfs:/databricks/scripts/azure-sqldb-spark-install.sh"
-              ]
+              "newClusterInitScripts": []
             }
           },
           "dependsOn": [
-            "[resourceId('Microsoft.DataFactory/factories/linkedServices',variables('adfName'), variables('akvName'))]",
+            "[resourceId('Microsoft.DataFactory/factories/linkedServices',variables('adfName'), 'AzureKeyVault')]",
             "[resourceId('Microsoft.DataFactory/factories',variables('adfName'))]"
           ]
         },
@@ -756,7 +754,7 @@
           ]
         },
         {
-          "name": "[concat(variables('adfName'), '/',variables('adlsName'))]",
+          "name": "[concat(variables('adfName'), '/AzureDatalakeStorage')]",
           "type": "Microsoft.DataFactory/factories/linkedServices",
           "apiVersion": "2018-06-01",
           "properties": {
@@ -773,7 +771,7 @@
           ]
         },
         {
-          "name": "[concat(variables('adfName'), '/',variables('sqlDatabaseName'))]",
+          "name": "[concat(variables('adfName'), '/AzureSynapseAnalytics')]",
           "type": "Microsoft.DataFactory/factories/linkedServices",
           "apiVersion": "2018-06-01",
           "properties": {
@@ -783,7 +781,7 @@
               "connectionString": {
                 "type": "AzureKeyVaultSecret",
                 "store": {
-                  "referenceName": "[variables('akvName')]",
+                  "referenceName": "AzureKeyVault",
                   "type": "LinkedServiceReference"
                 },
                 "secretName": "sqlConnectionString"
@@ -798,8 +796,7 @@
             "[resourceId('Microsoft.KeyVault/vaults', variables('akvName'))]",
             "[resourceId('Microsoft.DataFactory/factories',variables('adfName'))]",
             "[resourceId('Microsoft.Sql/servers', variables('sqlServerName'))]",
-            "[resourceId('Microsoft.KeyVault/vaults', variables('akvName'))]",
-            "[concat(resourceId('Microsoft.DataFactory/factories',variables('adfName')), '/linkedServices/',variables('akvName'))]",
+            "[concat(resourceId('Microsoft.DataFactory/factories',variables('adfName')), '/linkedServices/AzureKeyVault')]",
             "[resourceId(resourceGroup().name, 'Microsoft.Resources/deployments', 'irtemp')]"
           ]
         }
