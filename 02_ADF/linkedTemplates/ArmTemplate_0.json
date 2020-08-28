@@ -1,0 +1,546 @@
+{
+    "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "factoryName": {
+            "type": "string",
+            "metadata": "Data Factory name"
+        }
+    },
+    "variables": {
+        "factoryId": "[concat('Microsoft.DataFactory/factories/', parameters('factoryName'))]"
+    },
+    "resources": [
+        {
+            "name": "[concat(parameters('factoryName'), '/sink_contosoretaildw')]",
+            "type": "Microsoft.DataFactory/factories/datasets",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "linkedServiceName": {
+                    "referenceName": "AzureDatalakeStorage",
+                    "type": "LinkedServiceReference"
+                },
+                "annotations": [],
+                "type": "Binary",
+                "typeProperties": {
+                    "location": {
+                        "type": "AzureBlobFSLocation",
+                        "folderPath": "contoso/raw",
+                        "fileSystem": "datalake"
+                    }
+                }
+            },
+            "dependsOn": []
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/source_contosoretaildw')]",
+            "type": "Microsoft.DataFactory/factories/datasets",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "linkedServiceName": {
+                    "referenceName": "contosoretaildw",
+                    "type": "LinkedServiceReference"
+                },
+                "annotations": [],
+                "type": "Binary",
+                "typeProperties": {
+                    "location": {
+                        "type": "AzureBlobStorageLocation",
+                        "container": "contosoretaildw-tables"
+                    }
+                }
+            },
+            "dependsOn": []
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/init')]",
+            "type": "Microsoft.DataFactory/factories/pipelines",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "activities": [
+                    {
+                        "name": "ImportData",
+                        "type": "Copy",
+                        "dependsOn": [],
+                        "policy": {
+                            "timeout": "7.00:00:00",
+                            "retry": 0,
+                            "retryIntervalInSeconds": 30,
+                            "secureOutput": false,
+                            "secureInput": false
+                        },
+                        "userProperties": [],
+                        "typeProperties": {
+                            "source": {
+                                "type": "BinarySource",
+                                "storeSettings": {
+                                    "type": "AzureBlobStorageReadSettings",
+                                    "recursive": true
+                                },
+                                "formatSettings": {
+                                    "type": "BinaryReadSettings"
+                                }
+                            },
+                            "sink": {
+                                "type": "BinarySink",
+                                "storeSettings": {
+                                    "type": "AzureBlobFSWriteSettings"
+                                }
+                            },
+                            "enableStaging": false
+                        },
+                        "inputs": [
+                            {
+                                "referenceName": "source_contosoretaildw",
+                                "type": "DatasetReference",
+                                "parameters": {}
+                            }
+                        ],
+                        "outputs": [
+                            {
+                                "referenceName": "sink_contosoretaildw",
+                                "type": "DatasetReference",
+                                "parameters": {}
+                            }
+                        ]
+                    },
+                    {
+                        "name": "99_Init_Create_Delta",
+                        "type": "DatabricksNotebook",
+                        "dependsOn": [
+                            {
+                                "activity": "ImportData",
+                                "dependencyConditions": [
+                                    "Succeeded"
+                                ]
+                            }
+                        ],
+                        "policy": {
+                            "timeout": "7.00:00:00",
+                            "retry": 0,
+                            "retryIntervalInSeconds": 30,
+                            "secureOutput": false,
+                            "secureInput": false
+                        },
+                        "userProperties": [],
+                        "typeProperties": {
+                            "notebookPath": "/Shared/SparkETL_Contoso/99_Init_Create_Delta"
+                        },
+                        "linkedServiceName": {
+                            "referenceName": "AzureDatabricks",
+                            "type": "LinkedServiceReference"
+                        }
+                    }
+                ],
+                "annotations": [],
+                "lastPublishTime": "2020-08-28T11:36:24Z"
+            },
+            "dependsOn": [
+                "[concat(variables('factoryId'), '/datasets/source_contosoretaildw')]",
+                "[concat(variables('factoryId'), '/datasets/sink_contosoretaildw')]"
+            ]
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/sysTables')]",
+            "type": "Microsoft.DataFactory/factories/datasets",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "linkedServiceName": {
+                    "referenceName": "AzureSynapseAnalytics",
+                    "type": "LinkedServiceReference"
+                },
+                "annotations": [],
+                "type": "AzureSqlDWTable",
+                "schema": [
+                    {
+                        "name": "name",
+                        "type": "nvarchar"
+                    },
+                    {
+                        "name": "object_id",
+                        "type": "int",
+                        "precision": 10
+                    },
+                    {
+                        "name": "principal_id",
+                        "type": "int",
+                        "precision": 10
+                    },
+                    {
+                        "name": "schema_id",
+                        "type": "int",
+                        "precision": 10
+                    },
+                    {
+                        "name": "parent_object_id",
+                        "type": "int",
+                        "precision": 10
+                    },
+                    {
+                        "name": "type",
+                        "type": "char"
+                    },
+                    {
+                        "name": "type_desc",
+                        "type": "nvarchar"
+                    },
+                    {
+                        "name": "create_date",
+                        "type": "datetime",
+                        "precision": 23,
+                        "scale": 3
+                    },
+                    {
+                        "name": "modify_date",
+                        "type": "datetime",
+                        "precision": 23,
+                        "scale": 3
+                    },
+                    {
+                        "name": "is_ms_shipped",
+                        "type": "bit"
+                    },
+                    {
+                        "name": "is_published",
+                        "type": "bit"
+                    },
+                    {
+                        "name": "is_schema_published",
+                        "type": "bit"
+                    },
+                    {
+                        "name": "lob_data_space_id",
+                        "type": "int",
+                        "precision": 10
+                    },
+                    {
+                        "name": "filestream_data_space_id",
+                        "type": "int",
+                        "precision": 10
+                    },
+                    {
+                        "name": "max_column_id_used",
+                        "type": "int",
+                        "precision": 10
+                    },
+                    {
+                        "name": "lock_on_bulk_load",
+                        "type": "bit"
+                    },
+                    {
+                        "name": "uses_ansi_nulls",
+                        "type": "bit"
+                    },
+                    {
+                        "name": "is_replicated",
+                        "type": "bit"
+                    },
+                    {
+                        "name": "has_replication_filter",
+                        "type": "bit"
+                    },
+                    {
+                        "name": "is_merge_published",
+                        "type": "bit"
+                    },
+                    {
+                        "name": "is_sync_tran_subscribed",
+                        "type": "bit"
+                    },
+                    {
+                        "name": "has_unchecked_assembly_data",
+                        "type": "bit"
+                    },
+                    {
+                        "name": "text_in_row_limit",
+                        "type": "int",
+                        "precision": 10
+                    },
+                    {
+                        "name": "large_value_types_out_of_row",
+                        "type": "bit"
+                    },
+                    {
+                        "name": "is_tracked_by_cdc",
+                        "type": "bit"
+                    },
+                    {
+                        "name": "lock_escalation",
+                        "type": "tinyint",
+                        "precision": 3
+                    },
+                    {
+                        "name": "lock_escalation_desc",
+                        "type": "nvarchar"
+                    },
+                    {
+                        "name": "is_filetable",
+                        "type": "bit"
+                    },
+                    {
+                        "name": "is_memory_optimized",
+                        "type": "bit"
+                    },
+                    {
+                        "name": "durability",
+                        "type": "tinyint",
+                        "precision": 3
+                    },
+                    {
+                        "name": "durability_desc",
+                        "type": "nvarchar"
+                    },
+                    {
+                        "name": "temporal_type",
+                        "type": "tinyint",
+                        "precision": 3
+                    },
+                    {
+                        "name": "temporal_type_desc",
+                        "type": "nvarchar"
+                    },
+                    {
+                        "name": "history_table_id",
+                        "type": "int",
+                        "precision": 10
+                    },
+                    {
+                        "name": "is_remote_data_archive_enabled",
+                        "type": "bit"
+                    },
+                    {
+                        "name": "is_external",
+                        "type": "bit"
+                    },
+                    {
+                        "name": "history_retention_period",
+                        "type": "int",
+                        "precision": 10
+                    },
+                    {
+                        "name": "history_retention_period_unit",
+                        "type": "int",
+                        "precision": 10
+                    },
+                    {
+                        "name": "history_retention_period_unit_desc",
+                        "type": "nvarchar"
+                    },
+                    {
+                        "name": "is_node",
+                        "type": "bit"
+                    },
+                    {
+                        "name": "is_edge",
+                        "type": "bit"
+                    }
+                ],
+                "typeProperties": {
+                    "schema": "sys",
+                    "table": "Tables"
+                }
+            },
+            "dependsOn": []
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/master_pipeline')]",
+            "type": "Microsoft.DataFactory/factories/pipelines",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "activities": [
+                    {
+                        "name": "SQL Awake",
+                        "type": "Lookup",
+                        "dependsOn": [],
+                        "policy": {
+                            "timeout": "7.00:00:00",
+                            "retry": 0,
+                            "retryIntervalInSeconds": 30,
+                            "secureOutput": false,
+                            "secureInput": false
+                        },
+                        "userProperties": [],
+                        "typeProperties": {
+                            "source": {
+                                "type": "SqlDWSource",
+                                "queryTimeout": "02:00:00",
+                                "partitionOption": "None"
+                            },
+                            "dataset": {
+                                "referenceName": "sysTables",
+                                "type": "DatasetReference",
+                                "parameters": {}
+                            }
+                        }
+                    },
+                    {
+                        "name": "01_FactOnlineSales",
+                        "type": "DatabricksNotebook",
+                        "dependsOn": [
+                            {
+                                "activity": "SQL Awake",
+                                "dependencyConditions": [
+                                    "Succeeded"
+                                ]
+                            }
+                        ],
+                        "policy": {
+                            "timeout": "7.00:00:00",
+                            "retry": 0,
+                            "retryIntervalInSeconds": 30,
+                            "secureOutput": false,
+                            "secureInput": false
+                        },
+                        "userProperties": [],
+                        "typeProperties": {
+                            "notebookPath": "/Shared/SparkETL_Contoso/01_FactOnlineSales/01_FactOnlineSales_Load"
+                        },
+                        "linkedServiceName": {
+                            "referenceName": "AzureDatabricks",
+                            "type": "LinkedServiceReference"
+                        }
+                    },
+                    {
+                        "name": "02_DimProduct",
+                        "type": "DatabricksNotebook",
+                        "dependsOn": [
+                            {
+                                "activity": "SQL Awake",
+                                "dependencyConditions": [
+                                    "Succeeded"
+                                ]
+                            }
+                        ],
+                        "policy": {
+                            "timeout": "7.00:00:00",
+                            "retry": 0,
+                            "retryIntervalInSeconds": 30,
+                            "secureOutput": false,
+                            "secureInput": false
+                        },
+                        "userProperties": [],
+                        "typeProperties": {
+                            "notebookPath": "/Shared/SparkETL_Contoso/02_DimProduct/01_DimProduct_Load"
+                        },
+                        "linkedServiceName": {
+                            "referenceName": "AzureDatabricks",
+                            "type": "LinkedServiceReference"
+                        }
+                    },
+                    {
+                        "name": "usp_Update_DimProduct",
+                        "type": "SqlServerStoredProcedure",
+                        "dependsOn": [
+                            {
+                                "activity": "02_DimProduct",
+                                "dependencyConditions": [
+                                    "Succeeded"
+                                ]
+                            }
+                        ],
+                        "policy": {
+                            "timeout": "7.00:00:00",
+                            "retry": 0,
+                            "retryIntervalInSeconds": 30,
+                            "secureOutput": false,
+                            "secureInput": false
+                        },
+                        "userProperties": [],
+                        "typeProperties": {
+                            "storedProcedureName": "[[dbo].[usp_Update_DimProduct]"
+                        },
+                        "linkedServiceName": {
+                            "referenceName": "AzureSynapseAnalytics",
+                            "type": "LinkedServiceReference"
+                        }
+                    },
+                    {
+                        "name": "usp_Update_FactOnlineSales",
+                        "type": "SqlServerStoredProcedure",
+                        "dependsOn": [
+                            {
+                                "activity": "01_FactOnlineSales",
+                                "dependencyConditions": [
+                                    "Succeeded"
+                                ]
+                            }
+                        ],
+                        "policy": {
+                            "timeout": "7.00:00:00",
+                            "retry": 0,
+                            "retryIntervalInSeconds": 30,
+                            "secureOutput": false,
+                            "secureInput": false
+                        },
+                        "userProperties": [],
+                        "typeProperties": {
+                            "storedProcedureName": "[[dbo].[usp_Update_FactOnlineSales]"
+                        },
+                        "linkedServiceName": {
+                            "referenceName": "AzureSynapseAnalytics",
+                            "type": "LinkedServiceReference"
+                        }
+                    },
+                    {
+                        "name": "usp_Optimize_FactOnlineSales",
+                        "type": "SqlServerStoredProcedure",
+                        "dependsOn": [
+                            {
+                                "activity": "usp_Update_FactOnlineSales",
+                                "dependencyConditions": [
+                                    "Succeeded"
+                                ]
+                            }
+                        ],
+                        "policy": {
+                            "timeout": "7.00:00:00",
+                            "retry": 0,
+                            "retryIntervalInSeconds": 30,
+                            "secureOutput": false,
+                            "secureInput": false
+                        },
+                        "userProperties": [],
+                        "typeProperties": {
+                            "storedProcedureName": "[[dbo].[usp_Optimize_FactOnlineSales]"
+                        },
+                        "linkedServiceName": {
+                            "referenceName": "AzureSynapseAnalytics",
+                            "type": "LinkedServiceReference"
+                        }
+                    },
+                    {
+                        "name": "usp_Optimize_DimProduct",
+                        "type": "SqlServerStoredProcedure",
+                        "dependsOn": [
+                            {
+                                "activity": "usp_Update_DimProduct",
+                                "dependencyConditions": [
+                                    "Succeeded"
+                                ]
+                            }
+                        ],
+                        "policy": {
+                            "timeout": "7.00:00:00",
+                            "retry": 0,
+                            "retryIntervalInSeconds": 30,
+                            "secureOutput": false,
+                            "secureInput": false
+                        },
+                        "userProperties": [],
+                        "typeProperties": {
+                            "storedProcedureName": "[[dbo].[usp_Optimize_DimProduct]"
+                        },
+                        "linkedServiceName": {
+                            "referenceName": "AzureSynapseAnalytics",
+                            "type": "LinkedServiceReference"
+                        }
+                    }
+                ],
+                "annotations": []
+            },
+            "dependsOn": [
+                "[concat(variables('factoryId'), '/datasets/sysTables')]"
+            ]
+        }
+    ]
+}
