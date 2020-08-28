@@ -71,5 +71,6 @@
     <Build Include="dbo\Tables\FactOnlineSales.sql" />
     <Build Include="dbo\Tables\stg_DimProduct.sql" />
     <Build Include="dbo\Tables\stg_FactOnlineSales.sql" />
+    <Build Include="dbo\StoredProcedures\usp_Create_DimDate.sql" />
   </ItemGroup>
 </Project>
