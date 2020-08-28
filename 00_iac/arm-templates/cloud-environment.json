@@ -553,7 +553,7 @@
         {
             "type": "Microsoft.Sql/servers/databases/workloadGroups/workloadClassifiers",
             "apiVersion": "2019-06-01-preview",
-            "name":"[concat(variables('sqlServerName'), '/',variables('sqlDatabaseName'),'/ELTClassify')]",
+            "name":"[concat(variables('sqlServerName'), '/',variables('sqlDatabaseName'),'/ELT/ELTClassify')]",
             "dependsOn": [
                 "[resourceId('Microsoft.Sql/servers/databases/workloadGroups',  variables('sqlServerName'), variables('sqlDatabaseName'), 'ELT')]",
                 "[resourceId('Microsoft.Sql/servers/databases',  variables('sqlServerName'), variables('sqlDatabaseName'))]"
