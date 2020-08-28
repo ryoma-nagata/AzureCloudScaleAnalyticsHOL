@@ -223,7 +223,14 @@ Databaseのリソースに移動します。
 ```sql
 -- sql
 CREATE USER [DataFactoryのリソース名] FROM EXTERNAL PROVIDER;
-ALTER ROLE [db_owner] ADD MEMBER [DataFactoryのリソース名];
+
+EXEC sp_addrolemember 'db_owner', 'ユーザID or リソース名'
+
+
+CREATE LOGIN ETLLoader WITH PASSWORD = 'P@ssw0rd';
+CREATE USER ETLLoader FOR LOGIN ;
+EXEC sp_addrolemember 'db_owner', 'ETLLoader'
+
 ```
 
 ---

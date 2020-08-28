@@ -1,0 +1,82 @@
+# Starter pipeline
+# Start with a minimal pipeline that you can customize to build and deploy your code.
+# Add steps that build, run tests, deploy, and more: test
+# https://aka.ms/yaml 
+trigger:
+  branches:
+    include:
+      - master
+  paths:
+    include:
+      - 01_SQL/*
+pr:
+  branches:
+    include:
+      - master
+  paths:
+    include:
+      - 01_SQL/*
+
+pool:
+  name: Azure Pipelines
+  vmImage: "vs2017-win2016"
+  demands:
+  - msbuild
+  - visualstudio
+stages:
+- stage: sqlbuild
+  jobs:
+  - job: buildjob
+    steps:
+    - task: VSBuild@1
+      displayName: 'Build solution 01_SQL/**/*.sln'
+      inputs:
+        solution: '01_SQL/**/*.sln'
+    - task: CopyFiles@2
+      displayName: 'Copy Files to: $(build.artifactstagingdirectory)'
+      inputs:
+        SourceFolder: '$(agent.builddirectory)'
+        TargetFolder: '$(build.artifactstagingdirectory)'
+    - task: PublishBuildArtifacts@1
+      displayName: 'Publish Artifact drop'
+      inputs:
+        PathtoPublish: '$(Build.ArtifactStagingDirectory)'
+        ArtifactName: 'drop'
+        publishLocation: 'Container'
+
+- stage: sqldeploy
+  variables:
+    - group: devops-iac-vg
+    - name: server
+    - name: database
+  dependsOn: sqlbuild
+  jobs:
+  - job: deployjob
+    displayName: 'deploy sql'
+    steps:
+    - task: Bash@3
+      displayName: Set variable
+      inputs:
+        targetType: 'inline'
+        script: |
+          # Write your commands here
+          echo '##vso[task.setvariable variable=server]$(BASE_NAME)-sql.database.windows.net'
+          echo '##vso[task.setvariable variable=database]$(BASE_NAME)-dw'
+    - task: DownloadBuildArtifacts@0
+      displayName: 'download Artifact drop'
+      inputs:
+        buildType: 'current'
+        downloadType: 'single'
+        artifactName: 'drop'
+        downloadPath: '$(System.ArtifactsDirectory)'
+    - task: SqlAzureDacpacDeployment@1
+      displayName: 'Azure SQL DacpacTask'
+      inputs:
+        azureSubscription: 'azure-resource-connection'
+        ServerName: $(server)
+        DatabaseName: $(database)
+        SqlUsername: $(SQL_ADMINISTRATOR_LOGIN)
+        SqlPassword: $(SQL_ADMINISTRATOR_LOGIN_PASSWORD)
+        DacpacFile: '$(System.ArtifactsDirectory)/**/*.dacpac'
+
+

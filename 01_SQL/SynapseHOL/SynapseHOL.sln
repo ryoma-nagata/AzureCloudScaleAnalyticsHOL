@@ -1,0 +1,27 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.30320.27
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{00D1A9C2-B5F0-4AF3-8072-F6C62B433612}") = "SynapseHOL", "SynapseHOL\SynapseHOL.sqlproj", "{5A27D0C9-08C2-45EF-B554-B7FC57D16D1D}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{5A27D0C9-08C2-45EF-B554-B7FC57D16D1D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5A27D0C9-08C2-45EF-B554-B7FC57D16D1D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5A27D0C9-08C2-45EF-B554-B7FC57D16D1D}.Debug|Any CPU.Deploy.0 = Debug|Any CPU
+		{5A27D0C9-08C2-45EF-B554-B7FC57D16D1D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5A27D0C9-08C2-45EF-B554-B7FC57D16D1D}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5A27D0C9-08C2-45EF-B554-B7FC57D16D1D}.Release|Any CPU.Deploy.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {C41BCA0B-87B6-4A5C-B14F-4E1108223641}
+	EndGlobalSection
+EndGlobal
