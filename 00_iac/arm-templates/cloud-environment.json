@@ -553,13 +553,26 @@
         {
             "type": "Microsoft.Sql/servers/databases/workloadGroups/workloadClassifiers",
             "apiVersion": "2019-06-01-preview",
-            "name":"[concat(variables('sqlServerName'), '/',variables('sqlDatabaseName'),'/ELT/ELTClassify')]",
+            "name":"[concat(variables('sqlServerName'), '/',variables('sqlDatabaseName'),'/ELT/Loader')]",
             "dependsOn": [
                 "[resourceId('Microsoft.Sql/servers/databases/workloadGroups',  variables('sqlServerName'), variables('sqlDatabaseName'), 'ELT')]",
                 "[resourceId('Microsoft.Sql/servers/databases',  variables('sqlServerName'), variables('sqlDatabaseName'))]"
             ],
             "properties": {
                 "memberName": "[parameters('ELTLoaderLogin')]",
+                "importance": "normal"
+            }
+        },
+        {
+            "type": "Microsoft.Sql/servers/databases/workloadGroups/workloadClassifiers",
+            "apiVersion": "2019-06-01-preview",
+            "name":"[concat(variables('sqlServerName'), '/',variables('sqlDatabaseName'),'/ELT/ADF')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Sql/servers/databases/workloadGroups',  variables('sqlServerName'), variables('sqlDatabaseName'), 'ELT')]",
+                "[resourceId('Microsoft.Sql/servers/databases',  variables('sqlServerName'), variables('sqlDatabaseName'))]"
+            ],
+            "properties": {
+                "memberName": "[variables('adfName')]",
                 "importance": "normal"
             }
         }
