@@ -735,7 +735,7 @@
             }
           },
           "dependsOn": [
-            "[resourceId('Microsoft.DataFactory/factories/linkedServices',variables('adfName'), 'AzureKeyVault')]",
+            "[resourceId('Microsoft.DataFactory/factories/linkedServices',variables('adfName'), variables('akvName'))]",
             "[resourceId('Microsoft.DataFactory/factories',variables('adfName'))]"
           ]
         },
@@ -783,7 +783,7 @@
               "connectionString": {
                 "type": "AzureKeyVaultSecret",
                 "store": {
-                  "referenceName": "AzureKeyVault",
+                  "referenceName": "[variables('akvName')]",
                   "type": "LinkedServiceReference"
                 },
                 "secretName": "sqlConnectionString"
