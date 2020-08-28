@@ -718,7 +718,7 @@
               "accessToken": {
                 "type": "AzureKeyVaultSecret",
                 "store": {
-                  "referenceName": "AzureKeyVault",
+                  "referenceName": "[variables('akvName')]",
                   "type": "LinkedServiceReference"
                 },
                 "secretName": "databrickssecret"
