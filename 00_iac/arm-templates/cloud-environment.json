@@ -723,12 +723,12 @@
                 },
                 "secretName": "databrickssecret"
               },
-              "newClusterNodeType": "Standard_DS3_v2",
-              "newClusterNumOfWorker": "2:4",
+              "newClusterNodeType": "Standard_D8s_v3",
+              "newClusterNumOfWorker": "2:8",
               "newClusterSparkEnvVars": {
                 "PYSPARK_PYTHON": "/databricks/python3/bin/python3"
               },
-              "newClusterVersion": "6.6.x-scala2.11",
+              "newClusterVersion": "7.0.x-scala2.12",
               "newClusterInitScripts": [
                 "dbfs:/databricks/scripts/azure-sqldb-spark-install.sh"
               ]
@@ -740,14 +740,14 @@
           ]
         },
         {
-          "name": "[concat(variables('adfName'), '/nytaxiblob')]",
+          "name": "[concat(variables('adfName'), '/contosoretaildw')]",
           "type": "Microsoft.DataFactory/factories/linkedServices",
           "apiVersion": "2018-06-01",
             "properties": {
                 "annotations": [],
                 "type": "AzureBlobStorage",
                 "typeProperties": {
-                    "sasUri": "https://nytaxiblob.blob.core.windows.net?''"
+                    "sasUri": "https://contosoretaildw.blob.core.windows.net?''"
                 }
             },
           "dependsOn": [
