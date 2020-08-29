@@ -61,6 +61,7 @@
     <Folder Include="dbo" />
     <Folder Include="dbo\Tables" />
     <Folder Include="dbo\StoredProcedures" />
+    <Folder Include="dbo\Views" />
   </ItemGroup>
   <ItemGroup>
     <Build Include="dbo\StoredProcedures\usp_Optimize_DimProduct.sql" />
@@ -72,5 +73,6 @@
     <Build Include="dbo\Tables\stg_DimProduct.sql" />
     <Build Include="dbo\Tables\stg_FactOnlineSales.sql" />
     <Build Include="dbo\StoredProcedures\usp_Create_DimDate.sql" />
+    <Build Include="dbo\Views\v_FactOnlineSalesAgg.sql" />
   </ItemGroup>
 </Project>
