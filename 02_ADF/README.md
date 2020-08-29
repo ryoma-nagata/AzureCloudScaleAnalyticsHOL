@@ -100,5 +100,4 @@ Manageハブに移動して、「Git Configuration」→「Set up code repositor
 
 ## 次のステップ
 
-
-[Azure Databricks 成果物のデプロイ](../03_ADB/README.md)  
+[Power BIの接続確認](../03_PBI/README.md)

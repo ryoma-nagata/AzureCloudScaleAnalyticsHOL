@@ -95,4 +95,4 @@ Azure Portal上で末尾が **-dw** となっている、Azure Synaps Analytics�
 
 ## 次のステップ
 
-[データ投入確認](../10_Artifacts/README.md)
+[データ投入確認](../10_Execute/README.md)

@@ -14,8 +14,7 @@ Azure DevOpsを利用したAzureデータ基盤の構築ハンズオンラボで
 ## 手順リンク
 
 1. [DevOpsによる環境構築](00_Environment/README.md)
-2. [Azure SQL DBプロジェクトのデプロイ](01_SQL/README.md)
+2. [データベースプロジェクトのデプロイ](01_SQL/README.md)
 3. [Azure Data Factory 成果物のデプロイ](02_ADF/README.md)
-4. [Azure Databricks 成果物のデプロイ](03_ADB/README.md)]
-5. [Power BIの接続確認](05_PBI/README.md)
-6. [データ投入確認](10_Artifacts/README.md)
+4. [Power BIの接続確認](03_PBI/README.md)
+5. [データ投入確認](10_Execute/README.md)

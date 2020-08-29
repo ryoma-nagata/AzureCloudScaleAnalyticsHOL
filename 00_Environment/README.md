@@ -1,5 +1,35 @@
 # 環境構築手順
 
+- [環境構築手順](#環境構築手順)
+  - [概要](#概要)
+  - [環境のデプロイ](#環境のデプロイ)
+    - [環境のデプロイ手順概要](#環境のデプロイ手順概要)
+    - [前提条件](#前提条件)
+    - [1. Azure DevOps Servicesの構成](#1-azure-devops-servicesの構成)
+    - [2. コードのインポート](#2-コードのインポート)
+    - [3. サービスコネクションの構成](#3-サービスコネクションの構成)
+    - [4. サービスプリンシパルの権限を所有者に変更](#4-サービスプリンシパルの権限を所有者に変更)
+    - [5. パイプラインの変数グループを作成する](#5-パイプラインの変数グループを作成する)
+      - [DatabricksID、テナントIDの確認方法](#databricksidテナントidの確認方法)
+      - [Azure DevOpsサービス接続のプリンシパルIDの確認方法](#azure-devopsサービス接続のプリンシパルidの確認方法)
+    - [6. Pipeline読み込み,実行](#6-pipeline読み込み実行)
+  - [Azure Synapse Analytics設定](#azure-synapse-analytics設定)
+    - [Azure Synapse Analytics設定手順概要](#azure-synapse-analytics設定手順概要)
+    - [1. IPアドレスの追加](#1-ipアドレスの追加)
+    - [2. AD管理者の設定](#2-ad管理者の設定)
+    - [3. 権限付与設定](#3-権限付与設定)
+  - [Azure Databricks設定](#azure-databricks設定)
+    - [Azure Databricksの設定手順概要](#azure-databricksの設定手順概要)
+    - [1. dboファイルのダウンロード](#1-dboファイルのダウンロード)
+    - [2. dboファイルのインポート](#2-dboファイルのインポート)
+    - [3. PAT(Private Access Token)の作成](#3-patprivate-access-tokenの作成)
+    - [4. Scope作成](#4-scope作成)
+      - [Azure Key VaultのDNS名、リソースIDの確認方法](#azure-key-vaultのdns名リソースidの確認方法)
+    - [5. KeyvaultSecretの登録](#5-keyvaultsecretの登録)
+    - [(Oprion) クラスターの構成](#oprion-クラスターの構成)
+  - [疎通確認](#疎通確認)
+  - [次のステップ](#次のステップ)
+
 ---
 
 ## 概要
@@ -243,7 +273,7 @@ Databricksに移動し、Shared フォルダにimportします。
 
 ---
 
-### 1. PAT(Private Access Token)の作成
+### 3. PAT(Private Access Token)の作成
 
 PATを利用して、他のシステムに権限を委任して各種の操作が可能になります。
 ※PATの権限は発行者に基づきます。
@@ -260,7 +290,7 @@ Databricksのリソースに移動して、「Workspaceの起動」から、ワ�
 
 ---
 
-### 2. Scope作成
+### 4. Scope作成
 
 DatabricksのURLに「#secrets/createScope」を追加して移動します。
 
@@ -290,7 +320,7 @@ AZure ML専用のリソースには ***-aml-kv*** と付与されているため
 
 ---
 
-### 3. KeyvaultSecretの登録
+### 5. KeyvaultSecretの登録
 
 Key Vaultのリソースで、アクセスポリシーを追加します。
 「アクセスポリシー」→「アクセスポリシーの追加」に移動し、「キー、シークレット、および証明書の管理」を選択の上、「プリンシパルの選択」で自身を選択して、「追加」をクリックします。
@@ -318,7 +348,6 @@ Key Vaultのリソースで、アクセスポリシーを追加します。
 |アクティブ化する日を設定しますか？     | チェックしない        | 既定        |
 |有効期限を設定しますか？     | チェックしない        | 既定       |
 |有効ですか？     | はい        | 既定        |
-
 
 ### (Oprion) クラスターの構成
 
