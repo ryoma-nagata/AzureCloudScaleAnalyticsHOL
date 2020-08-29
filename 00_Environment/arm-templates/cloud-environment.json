@@ -608,7 +608,7 @@
     {
       "type": "Microsoft.Sql/servers/firewallRules",
       "apiVersion": "2015-05-01-preview",
-      "name": "[concat(variables('sqlServerName'), '/zeal')]",
+      "name": "[concat(variables('sqlServerName'), '/grantIP')]",
       "dependsOn": [
         "[resourceId('Microsoft.Sql/servers', variables('sqlServerName'))]"
       ],
