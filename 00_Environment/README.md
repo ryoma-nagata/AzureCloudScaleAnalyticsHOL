@@ -250,6 +250,18 @@ EXEC sp_addrolemember 'db_owner', 'DataFactoryのリソース名'
 CREATE USER ETLLoader FOR LOGIN ;
 EXEC sp_addrolemember 'db_owner', 'ETLLoader'
 
+--上記二点のユーザをELT処理用のワークロード管理グループに分類されるように構成
+CREATE WORKLOAD CLASSIFIER [ELT_ADF]
+WITH (WORKLOAD_GROUP = 'ELT'
+      ,MEMBERNAME = 'DataFactoryのリソース名'
+      ,IMPORTANCE = NORMAL);
+
+CREATE WORKLOAD CLASSIFIER [ELT_Loader]
+WITH (WORKLOAD_GROUP = 'ELT'
+      ,MEMBERNAME = 'ETLLoader'
+      ,IMPORTANCE = NORMAL);
+
+
 ```
 
 ![sqldb](.media/ssms_addrole.png)
