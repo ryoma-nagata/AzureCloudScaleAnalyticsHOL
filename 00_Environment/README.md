@@ -134,6 +134,7 @@ Azure DevOpsのサービスコネクション作成画面に移動します。
 | AZURE_RM_SVC_CON_ID              | (要確認)                     | Azure DevOpsサービス接続のプリンシパルID。確認方法は後述      |
 | AZURE_RM_SVC_CONNECTION          | azure-resource-connection | 変更不可                                     |
 | BASE_NAME                        | 例：dev-viz                 | 小文字英字およびハイフン7文字以内。各リソースの接頭辞となります。 一意となる必要があります。 |
+| GRANT_PUBLIC_IP | 任意 xxx.xxx.xxx.xxx | 各ファイアウォールで許可するPublic IP。範囲指定不可のため、複数を許可したい場合は、デプロイ後に追加が必要です。
 | ELTLOADER_LOGIN                        | ETLLoader                 | ETL User <br> 後続で利用するため固定 |
 | ELTLOADER_LOGIN_PASSWORD                        | 任意                 | ETL Userのパスワード 8文字以上|
 | LOCATION                         | 任意                 |　リソースのデプロイ先リージョン。japaneastなどを指定                                   |
