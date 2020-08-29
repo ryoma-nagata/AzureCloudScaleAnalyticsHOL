@@ -2,6 +2,7 @@
 
 - [環境構築手順](#環境構築手順)
   - [概要](#概要)
+    - [セキュリティ参考](#セキュリティ参考)
   - [環境のデプロイ](#環境のデプロイ)
     - [環境のデプロイ手順概要](#環境のデプロイ手順概要)
     - [前提条件](#前提条件)
@@ -38,6 +39,15 @@ Azure分析基盤を迅速に構築します。
 このテンプレートでは、Vnetの利用を前提にしており、一般的なセキュリティベースラインをパスすることを想定しています。
 
 ![Azure Analytics](.media/vnetArchi.png)
+
+### セキュリティ参考 
+
+このハンズオンで利用される、ARMテンプレートはセキュリティ要件のうち、特に注視されるデータのセキュリティを中心に設定しています。  
+**以下の参考を全て網羅的に達成しているものではありません。各自の責任のもと利用してください。**
+
+ - [BLOB ストレージのセキュリティに関する推奨事項](https://docs.microsoft.com/ja-jp/azure/storage/blobs/security-recommendations?toc=%2Fazure%2Fsecurity%2Ftoc.json&bc=%2Fazure%2Fsecurity%2Fbreadcrumb%2Ftoc.json)
+ - [Azure SQL Database と Azure SQL Managed Instance で一般的なセキュリティ要件を解決するためのプレイブック](https://docs.microsoft.com/ja-jp/azure/azure-sql/database/security-best-practice)
+ - [Azure Databricks Best Practices](https://github.com/Azure/AzureDatabricksBestPractices/blob/master/toc.md#do-not-store-any-production-data-in-default-dbfs-folders)
 
 ## 環境のデプロイ
 
@@ -267,7 +277,11 @@ DevOpsから対象の「SparkETL.dbc」をダウンロードします。
 
 ### 2. dboファイルのインポート
 
-Databricksに移動し、Shared フォルダにimportします。
+Databricksに移動します。
+
+![dblogin](.media/adb_login.png)
+
+Shared フォルダにimportします。
 
 ![dbc_import](.media/dbc_import.png)
 
@@ -381,4 +395,4 @@ Key Vaultのリソースで、アクセスポリシーを追加します。
 
 ## 次のステップ
 
-[Azure SQL DBプロジェクトのデプロイ](../01_SQL/README.md)  
+[データベースプロジェクトのデプロイ](../01_SQL/README.md)  

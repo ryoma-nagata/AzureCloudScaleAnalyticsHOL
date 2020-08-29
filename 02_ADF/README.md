@@ -63,7 +63,7 @@ DevOps画面からPipelineの作成を行います。
 
 YAMLファイルの内容が表示されるので、「RUN」をクリックします。
 
-![run env](.media/Run_pipeline.png)
+![run env](.media/run_pipeline.png)
 
 ---
 
