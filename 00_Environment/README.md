@@ -2,6 +2,7 @@
 
 - [環境構築手順](#環境構築手順)
   - [概要](#概要)
+    - [各セキュリティ設定の概要](#各セキュリティ設定の概要)
     - [セキュリティ参考](#セキュリティ参考)
   - [環境のデプロイ](#環境のデプロイ)
     - [環境のデプロイ手順概要](#環境のデプロイ手順概要)
@@ -39,6 +40,50 @@ Azure分析基盤を迅速に構築します。
 このテンプレートでは、Vnetの利用を前提にしており、一般的なセキュリティベースラインをパスすることを想定しています。
 
 ![Azure Analytics](.media/vnetArchi.png)
+
+### 各セキュリティ設定の概要
+
+手順を実施すると以下のような設定のリソース群がデプロイされます。（※NICなどの付随リソースは省略）
+
+|リソース種類 |リソース命名規則  |設定内容（既定で設定されるものは含めておりません）  |備考  |
+|---------|---------|---------|---------|
+|Azure Data Factory     | (BASE_NAME)-adf        | Synapse Analytics との Linked Service        |MSI認証により、Self-hosted IRでの接続 <br> 接続先はKey Vaultから取得        |　 |     |         | Key Vault との Linked Service        | MSI認証により、Azure IRでの接続        |
+|     |         | Databrikcs との Linked Service        | Private Access TokenをKeyVaultより取得して認証        |
+|     |         | Data Lake Storage Gen2 との Linked Service        | MSI認証（信頼されたサービス接続）により、Azure IRでの接続         |
+|     |         | 外部ストレージアカウント(contosoretaildw) との Linked Service        | SAS認証 <br> データの取得元         |
+| Virtual Network    | (BASE_NAME)-vnet         |  仮想ネットワーク       | サブネット：gateway、adb-public-subnet 、adb-private-subnetを保持       |
+|Network Security Group     | (BASE_NAME)-gateway-nsg        | gatewayサブネット（Power BI Onpremise Data Gateway , Selfhosted IR用）にインバウンドを制限する。 <br> 指定したIPのRDP接続のみを許可          |        |
+|Network Security Group     | (BASE_NAME)-adb-nsg        | 既定設定のみ         | Databricks委任        |
+|Azure SQL Server     | (BASE_NAME)-sql        | ManagedIDの生成        |         |
+|     |         | Advanced Data Security設定        |　参考：[Advanced Data Security](https://docs.microsoft.com/ja-jp/azure/azure-sql/database/advanced-data-security) <br>[Azure SQL Database、SQL Managed Instance、Azure Synapse Analytics のための Advanced Threat Protection](https://docs.microsoft.com/ja-jp/azure/azure-sql/database/threat-detection-overview)         |
+|     |         | gateway サブネット、databricks用サブネットとのサービスエンドポイント接続        |         |
+|     |         | 指定したIPのみを許可        |         |
+|     |         | Azure サービスおよびリソースにこのサーバーへのアクセスを許可する：いいえ       |         |
+| Azure Synapse Analytics     | (BASE_NAME)-dw      | DWU=500        |         |
+|     |         | 透過的な保存データ暗号化        | 参考:[SQL Database、SQL Managed Instance および Azure Synapse Analytics の透過的なデータ暗号化](https://docs.microsoft.com/ja-jp/azure/azure-sql/database/transparent-data-encryption-tde-overview?tabs=azure-portal)        |
+|     |         | ストレージへのデータベースレベル監査ログ出力        | 参考：[Azure SQL Database および Azure Synapse Analytics の監査](https://docs.microsoft.com/ja-jp/azure/azure-sql/database/auditing-overview)        |
+|     |         | ELT処理用のワークロードグループ        |         |
+|Azure Data Lake Storage Gen2     | (BASE_NAME)-adls        | 名称：datalakeのコンテナ        |         |
+|     |         | 選択されたネットワークのみを許可        |         |
+|     |         | 指定したIPとの接続を許可        |         |
+|     |         | DataFactoryに対して、Blobデータ共同作成者権限ロール付与        |         |
+|     |         | SQL Serverに対して、Blobデータ共同作成者権限ロール付与        |         |
+|Azure Databricks     | (BASE_NAME)-adb        | Vnetへのデプロイ        |         |
+|Azure KeyVault     | (BASE_NAME)-akv        | DataFactoryへのアクセスポリシーの付与        |         |
+|||Azure Databricksへのアクセスポリシーの付与|
+|||Azure DevOpsのサービス接続用サービスプリンシパルへのアクセスポリシーの付与|
+|||シークレット：datalakeKey <br> Azure Data Lake Storage Gen2のアカウントアクセスキー|
+|||シークレット：DataLakeAccountName <br> Azure Data Lake Storage Gen2のアカウント名|
+|||シークレット：ELTLoaderLoginId <br> ELT用ユーザのログインID|
+||| シークレット：ELTLoaderLoginPassword <br> ELT用ユーザのログインパスワード|
+|||シークレット：sqlConnectionString <br> SQLSever接続文字列|
+|||シークレット：ARMStorageSaSToken <br> ARM展開用のストレージSASトークン|
+|||シークレット：SQLServerName <br> SQLSever名称|
+|||シークレット：SQLDWName <br> Synapse Analytics名称|
+|Virtual Machine     |  (BASE_NAME)-pbgw-vm       | Standard_A4_v2        | Power BI Onpremise Data Gateway用VMのSKU        |
+|Virtual Machine     | vm0-(BASE_NAME先頭3文字)       |Standard_A4_v2 |Self-hosted IR用VMのSK|
+|||Data Factory用Self hosted IRインストール        | [Create self host IR and make it workable in azure VMs](https://github.com/Azure/azure-quickstart-templates/tree/master/101-vms-with-selfhost-integration-runtime)を利用        |
+|Storage Account |(BASE_NAME)armsa|既定設定のみ|Data Factory用のARMテンプレート展開先の一時配置場所|
 
 ### セキュリティ参考 
 
