@@ -47,7 +47,8 @@ Azure分析基盤を迅速に構築します。
 
 |リソース種類 |リソース命名規則  |設定内容（既定で設定されるものは含めておりません）  |備考  |
 |---------|---------|---------|---------|
-|Azure Data Factory     | (BASE_NAME)-adf        | Synapse Analytics との Linked Service        |MSI認証により、Self-hosted IRでの接続 <br> 接続先はKey Vaultから取得        |　 |     |         | Key Vault との Linked Service        | MSI認証により、Azure IRでの接続        |
+|Azure Data Factory     | (BASE_NAME)-adf        | Synapse Analytics との Linked Service        |MSI認証により、Self-hosted IRでの接続 <br> 接続先はKey Vaultから取得        |
+|     |         | Key Vault との Linked Service        | MSI認証により、Azure IRでの接続        |
 |     |         | Databrikcs との Linked Service        | Private Access TokenをKeyVaultより取得して認証        |
 |     |         | Data Lake Storage Gen2 との Linked Service        | MSI認証（信頼されたサービス接続）により、Azure IRでの接続         |
 |     |         | 外部ストレージアカウント(contosoretaildw) との Linked Service        | SAS認証 <br> データの取得元         |
